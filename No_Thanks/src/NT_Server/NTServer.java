@@ -36,7 +36,7 @@ public class NTServer extends JFrame {
   private Socket client_socket; // accept() 에서 생성된 client 소켓
   private Vector<UserService> UserVec = new Vector<>(); // 연결된 사용자를 저장할 벡터, ArrayList와 같이 동적 배열을 만들어주는 컬렉션 객체이나 동기화로 인해 안전성 향상
   private static final int BUF_LEN = 128; // Windows 처럼 BUF_LEN 을 정의
-
+  public Vector<NTRoom> RoomVector = new Vector<NTRoom>();
   /**
    * Launch the application.
    */
