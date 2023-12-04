@@ -7,6 +7,7 @@ class user {
 	private String name;			   // 유저 이름
 	private int token;				   // 게임 진행에 필요한 유저가 갖는 토큰
 	private ArrayList<Integer> cards;  // 유저가 획득한 카드
+	private int test;
 	
 	public user() {
 		name = "#" + user_count + " user";
