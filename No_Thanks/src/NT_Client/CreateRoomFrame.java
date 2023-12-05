@@ -6,6 +6,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -41,14 +43,26 @@ public class CreateRoomFrame extends JFrame {
 			}
 		});
 	}
+	// 방 생성 정보를 전송하기 위한 리스너 인터페이스 정의
+	public interface CreateRoomListener {
+        void onCreateRoom(String roomName, boolean isPass, String roomType);
+    }
+	private CreateRoomListener createRoomListener;
 
+    // 방 생성 정보를 받기 위한 메소드
+    public void addCreateRoomListener(CreateRoomListener listener) {
+        this.createRoomListener = listener;
+    }
+    
+    
 	/**
 	 * Create the frame.
 	 */
 	public CreateRoomFrame() {
 		setTitle("\uBC29 \uB9CC\uB4E4\uAE30");
 		setIconImage(Toolkit.getDefaultToolkit().getImage(CreateRoomFrame.class.getResource("/NT_Client/img/NT_icon.png")));
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//EXIT -> DISPOSE로 변경: 해당 창만 닫히게
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 600, 450);
 		contentPane = new JPanel();
 		contentPane.setBackground(new Color(255, 255, 255));
@@ -80,6 +94,7 @@ public class CreateRoomFrame extends JFrame {
 		passwdCheckBox.setBackground(new Color(255, 255, 255));
 		passwdCheckBox.setBounds(456, 207, 26, 23);
 		contentPane.add(passwdCheckBox);
+		passwdCheckBox.setSelected(true); // 처음에 체크되도록 설정
 		passwdCheckBox.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
@@ -112,6 +127,22 @@ public class CreateRoomFrame extends JFrame {
 		CreateBtn.setBounds(211, 347, 112, 34);
 		contentPane.add(CreateBtn);
 		
+		CreateBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String roomName = roomNameField.getText();
+		        boolean isPass = passwdCheckBox.isSelected();
+		        String roomType = (normalBtn.isSelected()) ? "Normal" : "Special";
+
+		        // 방 생성 정보를 리스너를 통해 전달
+		        if (createRoomListener != null) {
+		            createRoomListener.onCreateRoom(roomName, isPass, roomType);
+		        }
+
+		        // 창을 닫음
+		        dispose();
+			}
+		});
 		this.setResizable(false);
 	}
+	
 }

@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -38,6 +39,7 @@ public class LobbyPanel extends JPanel {
 	private JLabel userinfoLabel;
 	private TextField chatTextField;
 	private JButton sendBtn;
+	private JButton CreateBtn;
 	private static final int BUF_LEN = 128;
 	private String userName;
 	private Socket socket;
@@ -46,6 +48,8 @@ public class LobbyPanel extends JPanel {
 	private DataInputStream dis;
     private DataOutputStream dos;
 	
+    CreateRoomFrame createRoomFrame;
+    private DefaultListModel<String> roomListModel;
 	/**
 	 * Create the panel.
 	 */
@@ -65,7 +69,10 @@ public class LobbyPanel extends JPanel {
 		waitingroominfoLabel.setBounds(96, 10, 800, 45);
 		add(waitingroominfoLabel);
 		
+		roomListModel = new DefaultListModel<>();
+        
 		roomlist = new JList<String>();
+		roomlist.setModel(roomListModel);
 		roomlist.setBounds(96, 52, 800, 244);
 		add(roomlist);
 		
@@ -79,6 +86,7 @@ public class LobbyPanel extends JPanel {
 		add(scrollPane);
 		
 		textArea = new TextArea();
+		textArea.setEditable(false);
 		scrollPane.setViewportView(textArea);
 		
 		userinfoLabel = new JLabel("유저 목록");
@@ -96,11 +104,16 @@ public class LobbyPanel extends JPanel {
 		add(sendBtn);
 		
 		userlist = new JList<String>();
-		userlist.setBounds(651, 354, 245, 183);
+		userlist.setBounds(651, 336, 245, 183);
 		add(userlist);
 		
 		AppendText("User " + userName + " connecting " + ip_addr + " " + port_num + "\n");
 		this.userName = userName;
+		
+		CreateBtn = new JButton("방 생성");
+		CreateBtn.setFont(new Font("굴림", Font.BOLD, 18));
+		CreateBtn.setBounds(650, 525, 97, 32);
+		add(CreateBtn);
 
         try {
             socket = new Socket(ip_addr, Integer.parseInt(port_num));
@@ -114,6 +127,10 @@ public class LobbyPanel extends JPanel {
             net.start();
             Myaction action = new Myaction();
             sendBtn.addActionListener(action); // 내부클래스로 액션 리스너를 상속받은 클래스로
+            
+            CreateRoom create = new CreateRoom();
+            CreateBtn.addActionListener(create); // 방 생성 액션 리스너를 방 생성 버튼에 등록
+            
             chatTextField.addActionListener(action);
             chatTextField.requestFocus();
         } catch (NumberFormatException | IOException e) {
@@ -129,10 +146,41 @@ public class LobbyPanel extends JPanel {
             while (true) {
                 try {
                     // Use readUTF to read messages
+                	// 받은 메세지가 무엇으로 시작하는 지에 따라 다른 행동 수행
                     String msg = dis.readUTF();
-                    AppendText(msg);
+                    if (msg.startsWith("/userlist ")) {
+                        String[] userList = msg.split(" ");
+                        String[] users = new String[userList.length - 1];
+                        System.arraycopy(userList, 1, users, 0, userList.length - 1);
+                        userlist.setListData(users);
+                        
+                    } else if (msg.startsWith("/roomlist ")) {           
+                    	// "/roomlist" 다음에 오는 문자열에서 방 정보 추출
+                        String roomListInfo = msg.substring("/roomlist ".length());
+                        String[] roomInfos = roomListInfo.split(" ");
+
+                        // 방 정보를 LobbyPanel에 업데이트
+                        for (int i = 0; i < roomInfos.length; i += 5) {
+                        	
+                        	if (i + 4 >= roomInfos.length) {
+                                System.err.println("Not enough elements in roomInfos array.");
+                                break;
+                            }
+                            int roomNum = Integer.parseInt(roomInfos[i].trim());
+                            String roomName = roomInfos[i + 1];
+                            int userCount = Integer.parseInt(roomInfos[i + 2].trim());
+                            String status = roomInfos[i + 3].trim();
+                            boolean isPass = Boolean.parseBoolean(roomInfos[i + 4]);
+
+                            // LobbyPanel 업데이트
+                            lobbypanel.updateRoomList(roomNum, roomName, userCount, status, isPass);
+                        }
+                        System.out.println("Received /roomlist message: " + msg);
+                    } else {
+                        AppendText(msg);
+                    }
                 } catch (IOException e) {
-                    AppendText("dis.read() error");
+                    AppendText("dis.read() error. 서버가 닫혔습니다.");
                     try {
                         dos.close();
                         dis.close();
@@ -163,7 +211,22 @@ public class LobbyPanel extends JPanel {
 			}
 		}
 	}
+	// 방 생성 버튼 누르면 생성 창 뜨게함
+	class CreateRoom implements ActionListener
+	{
 
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// TODO Auto-generated method stub
+			createRoomFrame = new CreateRoomFrame();
+			createRoomFrame.setVisible(true);
+			
+			// 방 생성 정보를 전송
+			createRoomFrame.addCreateRoomListener((roomName, isPass, roomType) ->
+		    SendMessage("/roomlist " + "001 " + roomName + " " + "0 "+ roomType + " " + isPass));
+		}
+		
+	}
     // 화면에 출력
     public void AppendText(String msg) {
         textArea.append(msg);
@@ -188,5 +251,11 @@ public class LobbyPanel extends JPanel {
             }
         }
     }
-	
+ // 클라이언트의 roomlist를 업데이트하기 위한 메서드
+    private void updateRoomList(int roomNum, String roomName, int userCount, String status, boolean isPass) {
+        // 방 정보를 나타내는 문자열 생성
+        String roomInfo = String.format("%-50d\t%-70s\t%-50d\t%-50s\t%-30s", roomNum, roomName, userCount, status, (isPass ? "비공개" : "공개"));
+        // roomListModel에 방 정보 추가
+        roomListModel.addElement(roomInfo);
+    }
 }

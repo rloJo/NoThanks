@@ -10,6 +10,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 import java.util.Vector;
 
 import javax.swing.JButton;
@@ -24,192 +28,229 @@ import javax.swing.border.EmptyBorder;
 
 public class NTServer extends JFrame {
 
-  /**
-   * 
-   */
-  private static final long serialVersionUID = 1L;
-  private JPanel contentPane;
-  JTextArea textArea;
-  private JTextField txtPortNumber;
+    private static final long serialVersionUID = 1L;
+    private JPanel contentPane;
+    JTextArea textArea;
+    private JTextField txtPortNumber;
 
-  private ServerSocket socket; // ¼­¹ö¼ÒÄÏ
-  private Socket client_socket; // accept() ¿¡¼­ »ı¼ºµÈ client ¼ÒÄÏ
-  private Vector<UserService> UserVec = new Vector<>(); // ¿¬°áµÈ »ç¿ëÀÚ¸¦ ÀúÀåÇÒ º¤ÅÍ, ArrayList¿Í °°ÀÌ µ¿Àû ¹è¿­À» ¸¸µé¾îÁÖ´Â ÄÃ·º¼Ç °´Ã¼ÀÌ³ª µ¿±âÈ­·Î ÀÎÇØ ¾ÈÀü¼º Çâ»ó
-  private static final int BUF_LEN = 128; // Windows Ã³·³ BUF_LEN À» Á¤ÀÇ
-  /**
-   * Launch the application.
-   */
-  public static void main(String[] args) {   // ½ºÀ® ºñÁÖ¾ó µğÀÚÀÌ³Ê¸¦ ÀÌ¿ëÇØ GUI¸¦ ¸¸µé¸é ÀÚµ¿À¸·Î »ı¼ºµÇ´Â main ÇÔ¼ö
-      EventQueue.invokeLater(new Runnable() {
-          public void run() {
-              try {
-            	  NTServer frame = new NTServer();      // JavaChatServer Å¬·¡½ºÀÇ °´Ã¼ »ı¼º
-                  frame.setVisible(true);
-              } catch (Exception e) {
-                  e.printStackTrace();
-              }
-          }
-      });
-  }
+    private List<String> connectedUsers;
+    private ArrayList<NTRoom> roomList = new ArrayList<>();
+    NTRoom NTRoom;
 
+    private ServerSocket socket;
+    private Socket client_socket;
+    private Vector<UserService> UserVec = new Vector<>();
+    private static final int BUF_LEN = 128;
 
-  public NTServer() {
-      setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      setBounds(100, 100, 338, 386);
-      contentPane = new JPanel();
-      contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-      setContentPane(contentPane);
-      contentPane.setLayout(null);
+    public static void main(String[] args) {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                try {
+                    NTServer frame = new NTServer();
+                    frame.setVisible(true);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
 
-      JScrollPane scrollPane = new JScrollPane();
-      scrollPane.setBounds(12, 10, 300, 244);
-      contentPane.add(scrollPane);
+    private void handleCreateRoomCommand(String[] commandParts, DataOutputStream dos) {
+    	String roomName = Base64.getEncoder().encodeToString(commandParts[1].getBytes(StandardCharsets.UTF_8));
+        boolean isPass = Boolean.parseBoolean(commandParts[2]);
+        String roomType = Base64.getEncoder().encodeToString(commandParts[3].getBytes(StandardCharsets.UTF_8));
 
-      textArea = new JTextArea();
-      textArea.setEditable(false);
-      scrollPane.setViewportView(textArea);
+        NTRoom newRoom = new NTRoom(roomName, roomType, isPass);
+   
+        roomList.add(newRoom);
 
-      JLabel lblNewLabel = new JLabel("Port Number");
-      lblNewLabel.setBounds(12, 264, 87, 26);
-      contentPane.add(lblNewLabel);
+        // ë°© ëª©ë¡ì„ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì—ê²Œ ì „ì†¡
+        updateRoomListToAllClients();
+    }
 
-      txtPortNumber = new JTextField();
-      txtPortNumber.setHorizontalAlignment(SwingConstants.CENTER);
-      txtPortNumber.setText("30000");
-      txtPortNumber.setBounds(111, 264, 199, 26);
-      contentPane.add(txtPortNumber);
-      txtPortNumber.setColumns(10);
+    private void updateRoomListToAllClients() {
+        StringBuilder roomListMessage = new StringBuilder("/roomlist ");
+        for (NTRoom room : roomList) {
+        	roomListMessage.append(Integer.toString(room.getRoomNum())).append(" ")
+				            .append(room.getRoomName()).append(" ")
+				            .append(Integer.toString(room.getUserCount())).append(" ")
+				            .append(Integer.toString(room.getStatus())).append(" ")
+				            .append(room.getIsPass()).append(" ");
+        }
+        broadcastMessage(roomListMessage.toString());
+    }
 
-      JButton btnServerStart = new JButton("Server Start");
-      btnServerStart.addActionListener(new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-              try {
-                  socket = new ServerSocket(Integer.parseInt(txtPortNumber.getText()));
-              } catch (NumberFormatException | IOException e1) {
-                  // TODO Auto-generated catch block
-                  e1.printStackTrace();
-              }
-              AppendText("Chat Server Running..");
-              btnServerStart.setText("Chat Server Running..");
-              btnServerStart.setEnabled(false); // ¼­¹ö¸¦ ´õÀÌ»ó ½ÇÇà½ÃÅ°Áö ¸ø ÇÏ°Ô ¸·´Â´Ù
-              txtPortNumber.setEnabled(false); // ´õÀÌ»ó Æ÷Æ®¹øÈ£ ¼öÁ¤¸ø ÇÏ°Ô ¸·´Â´Ù
-              AcceptServer accept_server = new AcceptServer();   // ¸ÖÆ¼ ½º·¹µå °´Ã¼ »ı¼º
-              accept_server.start();
-          }
-      });
-      btnServerStart.setBounds(12, 300, 300, 35);
-      contentPane.add(btnServerStart);
-  }
+    private void broadcastMessage(String msg) {
+        for (UserService user : UserVec) {
+            user.WriteOne(msg);
+        }
+    }
 
-  // »õ·Î¿î Âü°¡ÀÚ accept() ÇÏ°í user thread¸¦ »õ·Î »ı¼ºÇÑ´Ù. ÇÑ¹ø ¸¸µé¾î¼­ °è¼Ó »ç¿ëÇÏ´Â ½º·¹µå
-  class AcceptServer extends Thread {
-      @SuppressWarnings("unchecked")
-      public void run() {
-          while (true) { // »ç¿ëÀÚ Á¢¼ÓÀ» °è¼ÓÇØ¼­ ¹Ş±â À§ÇØ while¹®
-              try {
-                  AppendText("Waiting clients ...");
-                  client_socket = socket.accept(); // accept°¡ ÀÏ¾î³ª±â Àü±îÁö´Â ¹«ÇÑ ´ë±âÁß
-                  AppendText("»õ·Î¿î Âü°¡ÀÚ from " + client_socket);
-                  // User ´ç ÇÏ³ª¾¿ Thread »ı¼º
-                  UserService new_user = new UserService(client_socket);
-                  UserVec.add(new_user); // »õ·Î¿î Âü°¡ÀÚ ¹è¿­¿¡ Ãß°¡
-                  AppendText("»ç¿ëÀÚ ÀÔÀå. ÇöÀç Âü°¡ÀÚ ¼ö " + UserVec.size());
-                  new_user.start(); // ¸¸µç °´Ã¼ÀÇ ½º·¹µå ½ÇÇà
-              } catch (IOException e) {
-                  AppendText("!!!! accept ¿¡·¯ ¹ß»ı... !!!!");
-              }
-          }
-      }
-  }
+    private void updateConnectedUsers() {
+        StringBuilder userListMessage = new StringBuilder("/userlist ");
+        for (String user : connectedUsers) {
+            userListMessage.append(user).append(" ");
+        }
+        for (UserService user : UserVec) {
+            user.WriteOne(userListMessage.toString());
+        }
+    }
 
-  //JtextArea¿¡ ¹®ÀÚ¿­À» Ãâ·ÂÇØ ÁÖ´Â ±â´ÉÀ» ¼öÇàÇÏ´Â ÇÔ¼ö
-  public void AppendText(String str) {
-      textArea.append(str + "\n");   //Àü´ŞµÈ ¹®ÀÚ¿­ strÀ» textArea¿¡ Ãß°¡
-      textArea.setCaretPosition(textArea.getText().length());  // textAreaÀÇ Ä¿¼­(Ä³·µ) À§Ä¡¸¦ ÅØ½ºÆ® ¿µ¿ªÀÇ ¸¶Áö¸·À¸·Î ÀÌµ¿
-  }
+    public NTServer() {
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setBounds(100, 100, 338, 386);
+        contentPane = new JPanel();
+        contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+        setContentPane(contentPane);
+        contentPane.setLayout(null);
 
-  // User ´ç »ı¼ºµÇ´Â Thread, À¯ÀúÀÇ ¼ö¸¸Å­ ½º·¹½º »ı¼º
-  // Read One ¿¡¼­ ´ë±â -> Write All
-  class UserService extends Thread {
-      private InputStream is;
-      private OutputStream os;
-      private DataInputStream dis;
-      private DataOutputStream dos;
-      private Socket client_socket;
-      private Vector<UserService> user_vc; // Á¦³×¸¯ Å¸ÀÔ »ç¿ë
-      private String UserName = "";
+        JScrollPane scrollPane = new JScrollPane();
+        scrollPane.setBounds(12, 10, 300, 244);
+        contentPane.add(scrollPane);
 
-      public UserService(Socket client_socket) {
-          // ¸Å°³º¯¼ö·Î ³Ñ¾î¿Â ÀÚ·á ÀúÀå
-          this.client_socket = client_socket;
-          this.user_vc = UserVec;
-          try {
-              is = client_socket.getInputStream();
-              dis = new DataInputStream(is);
-              os = client_socket.getOutputStream();
-              dos = new DataOutputStream(os);
-              String line1 = dis.readUTF();      // Á¦ÀÏ Ã³À½ ¿¬°áµÇ¸é SendMessage("/login " + UserName);¿¡ ÀÇÇØ "/login UserName" ¹®ÀÚ¿­ÀÌ µé¾î¿È
-              String[] msg = line1.split(" ");   //line1ÀÌ¶ó´Â ¹®ÀÚ¿­À» °ø¹é(" ")À» ±âÁØÀ¸·Î ºĞÇÒ
-              UserName = msg[1].trim();          //ºĞÇÒµÈ ¹®ÀÚ¿­ ¹è¿­ msgÀÇ µÎ ¹øÂ° ¿ä¼Ò(ÀÎµ¦½º 1)¸¦ °¡Á®¿Í trim ¸Ş¼Òµå¸¦ »ç¿ëÇÏ¿© ¾ÕµÚÀÇ °ø¹éÀ» Á¦°Å
-              AppendText("»õ·Î¿î Âü°¡ÀÚ " + UserName + " ÀÔÀå.");
-              WriteOne("Welcome to Java chat server\n");
-              WriteOne(UserName + "´Ô È¯¿µÇÕ´Ï´Ù.\n"); // ¿¬°áµÈ »ç¿ëÀÚ¿¡°Ô Á¤»óÁ¢¼ÓÀ» ¾Ë¸²
-          } catch (Exception e) {
-              AppendText("userService error");
-          }
-      }
+        textArea = new JTextArea();
+        textArea.setEditable(false);
+        scrollPane.setViewportView(textArea);
 
+        JLabel lblNewLabel = new JLabel("Port Number");
+        lblNewLabel.setBounds(12, 264, 87, 26);
+        contentPane.add(lblNewLabel);
 
-      // Å¬¶óÀÌ¾ğÆ®·Î ¸Ş½ÃÁö Àü¼Û
-      public void WriteOne(String msg) {
-          try {
-              dos.writeUTF(msg);
-          } catch (IOException e) {
-              AppendText("dos.write() error");
-              try {
-                  dos.close();
-                  dis.close();
-                  client_socket.close();
-              } catch (IOException e1) {
-                  e1.printStackTrace();
-              }
-              UserVec.removeElement(this); // ¿¡·¯°¡³­ ÇöÀç °´Ã¼¸¦ º¤ÅÍ¿¡¼­ Áö¿î´Ù
-              AppendText("»ç¿ëÀÚ ÅğÀå. ÇöÀç Âü°¡ÀÚ ¼ö " + UserVec.size());
-          }
-      }
+        txtPortNumber = new JTextField();
+        txtPortNumber.setHorizontalAlignment(SwingConstants.CENTER);
+        txtPortNumber.setText("30000");
+        txtPortNumber.setBounds(111, 264, 199, 26);
+        contentPane.add(txtPortNumber);
+        txtPortNumber.setColumns(10);
 
-      
-      //¸ğµç ´ÙÁß Å¬¶óÀÌ¾ğÆ®¿¡°Ô ¼øÂ÷ÀûÀ¸·Î Ã¤ÆÃ ¸Ş½ÃÁö Àü´Ş
-      public void WriteAll(String str) {  
-          for (int i = 0; i < user_vc.size(); i++) {
-          	UserService user = user_vc.get(i);     // get(i) ¸Ş¼Òµå´Â user_vc ÄÃ·º¼ÇÀÇ i¹øÂ° ¿ä¼Ò¸¦ ¹İÈ¯
-              user.WriteOne(str);
-          }
-      }
-      
-      
-      public void run() {
-          while (true) {
-              try {
-                  String msg = dis.readUTF(); 
-                  msg = msg.trim();   //msg¸¦ °¡Á®¿Í trim ¸Ş¼Òµå¸¦ »ç¿ëÇÏ¿© ¾ÕµÚÀÇ °ø¹éÀ» Á¦°Å
-                  AppendText(msg); // server È­¸é¿¡ Ãâ·Â
-                  WriteAll(msg + "\n"); // Write All
-              } catch (IOException e) {
-                  AppendText("dis.readUTF() error");
-                  try {
-                      dos.close();
-                      dis.close();
-                      client_socket.close();
-                      UserVec.removeElement(this); // ¿¡·¯°¡ ³­ ÇöÀç °´Ã¼¸¦ º¤ÅÍ¿¡¼­ Áö¿î´Ù
-                      AppendText("»ç¿ëÀÚ ÅğÀå. ³²Àº Âü°¡ÀÚ ¼ö " + UserVec.size());
-                      break;
-                  } catch (Exception ee) {
-                      break;
-                  } 
-              }
-          }
-      }
-      
-  }
+        connectedUsers = new ArrayList<>();
+
+        JButton btnServerStart = new JButton("Server Start");
+        btnServerStart.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    socket = new ServerSocket(Integer.parseInt(txtPortNumber.getText()));
+                } catch (NumberFormatException | IOException e1) {
+                    e1.printStackTrace();
+                }
+                AppendText("Chat Server Running..");
+                btnServerStart.setText("Chat Server Running..");
+                btnServerStart.setEnabled(false);
+                txtPortNumber.setEnabled(false);
+                AcceptServer accept_server = new AcceptServer();
+                accept_server.start();
+            }
+        });
+        btnServerStart.setBounds(12, 300, 300, 35);
+        contentPane.add(btnServerStart);
+    }
+
+    class AcceptServer extends Thread {
+        @SuppressWarnings("unchecked")
+        public void run() {
+            while (true) {
+                try {
+                    AppendText("Waiting clients ...");
+                    client_socket = socket.accept();
+                    AppendText("ìƒˆë¡œìš´ ì°¸ê°€ì from " + client_socket);
+                    UserService new_user = new UserService(client_socket);
+                    UserVec.add(new_user);
+                    connectedUsers.add(new_user.getUserName());
+                    updateConnectedUsers();
+                    AppendText("ì‚¬ìš©ì ì…ì¥. í˜„ì¬ ì°¸ê°€ì ìˆ˜ " + UserVec.size());
+                    new_user.start();
+                } catch (IOException e) {
+                    AppendText("!!!! accept ì—ëŸ¬ ë°œìƒ... !!!!");
+                }
+            }
+        }
+    }
+
+    public void AppendText(String str) {
+        textArea.append(str + "\n");
+        textArea.setCaretPosition(textArea.getText().length());
+    }
+
+    class UserService extends Thread {
+        private InputStream is;
+        private OutputStream os;
+        private DataInputStream dis;
+        private DataOutputStream dos;
+        private Socket client_socket;
+        private Vector<UserService> user_vc;
+        private String UserName = "";
+
+        public String getUserName() {
+            return UserName;
+        }
+
+        public UserService(Socket client_socket) {
+            this.client_socket = client_socket;
+            this.user_vc = UserVec;
+            try {
+                is = client_socket.getInputStream();
+                dis = new DataInputStream(is);
+                os = client_socket.getOutputStream();
+                dos = new DataOutputStream(os);
+                String line1 = dis.readUTF();
+                String[] msg = line1.split(" ");
+                UserName = msg[1].trim();
+                AppendText("ìƒˆë¡œìš´ ì°¸ê°€ì " + UserName + " ì…ì¥.");
+                WriteOne("Welcome to Java chat server\n");
+                WriteOne(UserName + "ë‹˜ í™˜ì˜í•©ë‹ˆë‹¤.\n");
+            } catch (Exception e) {
+                AppendText("userService error");
+            }
+        }
+
+        public void WriteOne(String msg) {
+            try {
+                dos.writeUTF(msg);
+            } catch (IOException e) {
+                AppendText("dos.write() error");
+                try {
+                    dos.close();
+                    dis.close();
+                    client_socket.close();
+                    UserVec.removeElement(this);
+                    connectedUsers.remove(UserName);
+                    updateConnectedUsers();
+                    AppendText("ì‚¬ìš©ì í‡´ì¥. ë‚¨ì€ ì°¸ê°€ì ìˆ˜ " + UserVec.size());
+                } catch (Exception ee) {
+                }
+            }
+        }
+
+        public void WriteAll(String str) {
+            for (int i = 0; i < user_vc.size(); i++) {
+                UserService user = user_vc.get(i);
+                user.WriteOne(str);
+            }
+        }
+
+        public void run() {
+            while (true) {
+                try {
+                    String msg = dis.readUTF();
+                    msg = msg.trim();
+                    AppendText(msg);
+                    WriteAll(msg + "\n");
+                } catch (IOException e) {
+                    AppendText("dis.readUTF() error");
+                    try {
+                        dos.close();
+                        dis.close();
+                        client_socket.close();
+                        UserVec.removeElement(this);
+                        connectedUsers.remove(UserName);
+                        updateConnectedUsers();
+                        AppendText("ì‚¬ìš©ì í‡´ì¥. ë‚¨ì€ ì°¸ê°€ì ìˆ˜ " + UserVec.size());
+                        break;
+                    } catch (Exception ee) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }
