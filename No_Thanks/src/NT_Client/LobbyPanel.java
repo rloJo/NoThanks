@@ -12,6 +12,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
@@ -28,6 +30,7 @@ public class LobbyPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 	public JFrame mainFrame;
 	private LobbyPanel lobbypanel;
+	private InGamePanel IngamePanel;
 	private Container container;
 	private CardLayout cardLayout;
 	private JLabel waitingroominfoLabel;
@@ -47,6 +50,8 @@ public class LobbyPanel extends JPanel {
 	private OutputStream os;
 	private DataInputStream dis;
     private DataOutputStream dos;
+    private ObjectInputStream ois;
+	private ObjectOutputStream oos;
 	
     CreateRoomFrame createRoomFrame;
     private DefaultListModel<String> roomListModel;
@@ -217,13 +222,11 @@ public class LobbyPanel extends JPanel {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			// TODO Auto-generated method stub
 			createRoomFrame = new CreateRoomFrame();
-			createRoomFrame.setVisible(true);
 			
 			// 방 생성 정보를 전송
-			createRoomFrame.addCreateRoomListener((roomName, isPass, roomType) ->
-		    SendMessage("/roomlist " + "001 " + roomName + " " + "0 "+ roomType + " " + isPass));
+			//createRoomFrame.addCreateRoomListener((roomName, isPass, roomType) ->
+		    //SendMessage("/roomlist " + "001 " + roomName + " " + "0 "+ roomType + " " + isPass));
 		}
 		
 	}
@@ -258,4 +261,28 @@ public class LobbyPanel extends JPanel {
         // roomListModel에 방 정보 추가
         roomListModel.addElement(roomInfo);
     }
+    
+  
+      
+    public void createRoom(String roomName, String password, int peopleCount) {
+		createRoomFrame.dispose(); // 프레임 닫기
+		
+		IngamePanel = new InGamePanel(container, lobbypanel); 
+		container.add(IngamePanel, "IngamePanel");
+		cardLayout.show(container, "IngamePanel");
+		
+		RequestMsg RequestMsg = new RequestMsg(userName, "200", "방 만들기");
+		sendObject(RequestMsg);
+	}
+    
+    
+    public void sendObject(Object obj) {
+ 		try {
+ 			if(obj instanceof RequestMsg) {
+ 				oos.writeObject(obj);
+ 			}
+ 		} catch (Exception e) {
+ 			System.out.println("client to server RequestMsg  error");
+ 		}
+ 	}
 }
