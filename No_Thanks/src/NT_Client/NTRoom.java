@@ -9,16 +9,21 @@ public class NTRoom {
 	private boolean isPass = false;
 	private String roomPass="";
 	
-	NTRoom(String hostName, String roomName, boolean isPass, String roomPass){
-		roomNum++;
+	private String roomType = "";
+	
+	NTRoom(int roomNum, String roomName, String roomType, boolean isPass){
+		this.roomNum = roomNum;
 		this.roomName = roomName;
-		this.userCount++;
+		//this.userCount++;
 		this.isPass = isPass;
-		this.hostName = hostName;
-		if(this.isPass)
+		this.roomType = roomType;
+		//this.hostName = hostName;
+		//비밀번호 잠시 보류
+		/*if(this.isPass)
 		{
 			this.roomPass = roomPass;
 		}
+		*/
 	}
 	
 	public int getRoomNum() {
@@ -35,5 +40,8 @@ public class NTRoom {
 	
 	public boolean getIsPass() {
 		return this.isPass;
+	}
+	public String getRoomType() {
+		return this.roomType;
 	}
 }

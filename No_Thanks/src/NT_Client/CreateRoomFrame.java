@@ -46,6 +46,7 @@ public class CreateRoomFrame extends JFrame {
 	// 방 생성 정보를 전송하기 위한 리스너 인터페이스 정의
 	public interface CreateRoomListener {
         void onCreateRoom(String roomName, boolean isPass, String roomType);
+
     }
 	private CreateRoomListener createRoomListener;
 
@@ -135,7 +136,7 @@ public class CreateRoomFrame extends JFrame {
 
 		        // 방 생성 정보를 리스너를 통해 전달
 		        if (createRoomListener != null) {
-		            createRoomListener.onCreateRoom(roomName, isPass, roomType);
+		            createRoomListener.onCreateRoom(roomName, isPass, roomType);		            
 		        }
 
 		        // 창을 닫음

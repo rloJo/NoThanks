@@ -8,6 +8,8 @@ import java.awt.TextArea;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -16,6 +18,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -37,6 +42,7 @@ public class LobbyPanel extends JPanel {
 	private JList<String> userlist;
 	private JList<String> roomlist;
 	private JLabel chatinfoLabel;
+	private JLabel[] playerNameLabels;
 	private JScrollPane scrollPane;
 	private TextArea textArea;
 	private JLabel userinfoLabel;
@@ -53,12 +59,16 @@ public class LobbyPanel extends JPanel {
     private ObjectInputStream ois;
 	private ObjectOutputStream oos;
 	
+	InGamePanel inGamePanel;
     CreateRoomFrame createRoomFrame;
     private DefaultListModel<String> roomListModel;
 	/**
 	 * Create the panel.
 	 */
 	public LobbyPanel(Container container, JFrame mainFrame,String userName, String ip_addr, String port_num) {
+		
+		// JLabel 배열 초기화
+        playerNameLabels = new JLabel[4];
 		lobbypanel = this;
 		this.mainFrame = mainFrame;
 		this.container = container;
@@ -80,7 +90,27 @@ public class LobbyPanel extends JPanel {
 		roomlist.setModel(roomListModel);
 		roomlist.setBounds(96, 52, 800, 244);
 		add(roomlist);
-		
+		// roomlist에 MouseListener 추가
+        roomlist.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) { // 더블클릭 확인
+                    int selectedIndex = roomlist.getSelectedIndex();
+                    if (selectedIndex != -1) {
+                        // 더블클릭된 방의 정보 가져오기
+                        String selectedRoomInfo = roomListModel.getElementAt(selectedIndex);
+                        String[] roomInfoParts = selectedRoomInfo.split("\t");
+   
+                        // 방 번호 추출
+                        int roomNum = Integer.parseInt(roomInfoParts[0].trim());
+                        SendMessage("/enterroom " + roomNum + " " + userName);
+                        System.out.println(roomNum + userName);
+                        // InGamePanel 띄우기
+                        openInGamePanel();
+                    }
+                }
+            }
+        });
 		chatinfoLabel = new JLabel("전체 채팅");
 		chatinfoLabel.setFont(new Font("굴림", Font.BOLD, 24));
 		chatinfoLabel.setBounds(96, 306, 119, 33);
@@ -146,58 +176,85 @@ public class LobbyPanel extends JPanel {
 
 	}
 	 // Server Message를 수신해서 화면에 표시
-    class ListenNetwork extends Thread {
-        public void run() {
-            while (true) {
-                try {
-                    // Use readUTF to read messages
-                	// 받은 메세지가 무엇으로 시작하는 지에 따라 다른 행동 수행
-                    String msg = dis.readUTF();
-                    if (msg.startsWith("/userlist ")) {
+	class ListenNetwork extends Thread {
+	    public void run() {
+	        while (true) {
+	            try {
+	                String msg = dis.readUTF();
+	                if (msg.startsWith("/userlist ")) {
                         String[] userList = msg.split(" ");
                         String[] users = new String[userList.length - 1];
                         System.arraycopy(userList, 1, users, 0, userList.length - 1);
                         userlist.setListData(users);
-                        
-                    } else if (msg.startsWith("/roomlist ")) {           
-                    	// "/roomlist" 다음에 오는 문자열에서 방 정보 추출
-                        String roomListInfo = msg.substring("/roomlist ".length());
-                        String[] roomInfos = roomListInfo.split(" ");
+	                }
+                    else if (msg.startsWith("/roomlist ")) {
+	                    // "/roomlist" 다음에 오는 문자열에서 방 정보 추출
+	                    String roomListInfo = msg.substring("/roomlist ".length());
+	                    String[] roomInfos = roomListInfo.split(" ");
 
-                        // 방 정보를 LobbyPanel에 업데이트
-                        for (int i = 0; i < roomInfos.length; i += 5) {
-                        	
-                        	if (i + 4 >= roomInfos.length) {
-                                System.err.println("Not enough elements in roomInfos array.");
+	                    // 기존 방 목록을 지우고 새로 갱신
+	                    roomListModel.clear();
+
+	                    // 방 정보를 LobbyPanel에 업데이트
+	                    for (int i = 0; i < roomInfos.length; i += 5) {
+	                        if (i + 4 >= roomInfos.length) {
+	                            System.err.println("Not enough elements in roomInfos array.");
+	                            break;
+	                        }
+	                        int roomNum = Integer.parseInt(roomInfos[i].trim());
+	                        String roomName = roomInfos[i + 1];
+	                        int userCount = Integer.parseInt(roomInfos[i + 2].trim());
+	                        String status = roomInfos[i + 3].trim();
+	                        boolean isPass = Boolean.parseBoolean(roomInfos[i + 4]);
+
+	                        // LobbyPanel 업데이트
+	                        lobbypanel.updateRoomList(roomNum, roomName, userCount, status, isPass);
+	                    }
+	                    System.out.println("Received /roomlist message: " + msg);
+	                } 
+                    else if (msg.startsWith("/roominfo ")) {
+                        // "/roominfo" 다음에 오는 문자열에서 방 번호와 사용자 이름들 추출
+                        String[] parts = msg.substring("/roominfo ".length()).trim().split(" ");
+                        int roomNum = Integer.parseInt(parts[0].trim());
+
+                        // 수정된 부분: 방 번호 출력
+                        System.out.println("Room number: " + roomNum);
+
+                        // 사용자 이름들을 저장할 배열
+                        List<String> userNamesList = new ArrayList<>();
+                        for (int i = 1; i < parts.length; i++) {
+                            // 사용자 이름의 갯수가 4를 초과하면 나머지는 무시
+                            if (i - 1 >= 4) {
                                 break;
                             }
-                            int roomNum = Integer.parseInt(roomInfos[i].trim());
-                            String roomName = roomInfos[i + 1];
-                            int userCount = Integer.parseInt(roomInfos[i + 2].trim());
-                            String status = roomInfos[i + 3].trim();
-                            boolean isPass = Boolean.parseBoolean(roomInfos[i + 4]);
-
-                            // LobbyPanel 업데이트
-                            lobbypanel.updateRoomList(roomNum, roomName, userCount, status, isPass);
+                            userNamesList.add(parts[i]);
                         }
-                        System.out.println("Received /roomlist message: " + msg);
-                    } else {
-                        AppendText(msg);
+
+                        // 수정된 부분: 사용자 이름들 출력
+                        System.out.println("User names: " + userNamesList);
+                        
+                        for(int i = 0; i < playerNameLabels.length && i < userNamesList.size(); i++) {
+                        	playerNameLabels[i].setText(userNamesList.get(i));
+                        }
                     }
-                } catch (IOException e) {
-                    AppendText("dis.read() error. 서버가 닫혔습니다.");
-                    try {
-                        dos.close();
-                        dis.close();
-                        socket.close();
-                        break;
-                    } catch (Exception ee) {
-                        break;
-                    }
-                }
-            }
-        }
-    }
+
+                    else {
+	                    AppendText(msg);
+	                }
+	            } catch (IOException e) {
+	                AppendText("dis.read() error. 서버가 닫혔습니다.");
+	                try {
+	                    dos.close();
+	                    dis.close();
+	                    socket.close();
+	                    break;
+	                } catch (Exception ee) {
+	                    break;
+	                }
+	            }
+	        }
+	    }
+	}
 
 	// keyboard enter key 치면 서버로 전송
 	class Myaction implements ActionListener // 내부클래스로 액션 이벤트 처리 클래스
@@ -223,10 +280,12 @@ public class LobbyPanel extends JPanel {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			createRoomFrame = new CreateRoomFrame();
-			
+			createRoomFrame.setVisible(true);
 			// 방 생성 정보를 전송
-			//createRoomFrame.addCreateRoomListener((roomName, isPass, roomType) ->
-		    //SendMessage("/roomlist " + "001 " + roomName + " " + "0 "+ roomType + " " + isPass));
+			createRoomFrame.addCreateRoomListener((roomName, isPass, roomType) -> {
+	            SendMessage("/createroom " + roomName + " " + isPass + " " + roomType);
+     
+	        });
 		}
 		
 	}
@@ -263,7 +322,7 @@ public class LobbyPanel extends JPanel {
     }
     
   
-      
+    
     public void createRoom(String roomName, String password, int peopleCount) {
 		createRoomFrame.dispose(); // 프레임 닫기
 		
@@ -285,4 +344,17 @@ public class LobbyPanel extends JPanel {
  			System.out.println("client to server RequestMsg  error");
  		}
  	}
+    // InGamePanel을 열기 위한 메서드
+    private void openInGamePanel() {
+        // InGamePanel 생성 및 설정
+        inGamePanel = new InGamePanel(container, this);
+        container.add(inGamePanel, "InGamePanel");
+        cardLayout.show(container, "InGamePanel");
+        
+        playerNameLabels[0] = inGamePanel.p1_nameLabel;
+        playerNameLabels[1] = inGamePanel.p2_nameLabel;
+        playerNameLabels[2] = inGamePanel.p3_nameLabel;
+        playerNameLabels[3] = inGamePanel.p4_nameLabel;
+        //inGamePanel.p1_nameLabel.setText(UserName);
+    }
 }

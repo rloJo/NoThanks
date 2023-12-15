@@ -5,6 +5,8 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -15,15 +17,17 @@ import javax.swing.border.MatteBorder;
 
 public class InGamePanel extends JPanel {
 
-	
+	private int roomNum;
+	private String userName;
+	private List<String> playerNames; // 방에 들어간 순서대로 사용자 이름을 저장하는 리스트 
 	
 	private Container container;
 	private CardLayout cardlayout;
 	private LobbyPanel lobbypanel;
-	private JLabel p1_nameLabel;
-	private JLabel p2_nameLabel;
-	private JLabel p3_nameLabel;
-	private JLabel p4_nameLabel;
+	public JLabel p1_nameLabel;
+	public JLabel p2_nameLabel;
+	public JLabel p3_nameLabel;
+	public JLabel p4_nameLabel;
 	private JTextArea p1_cardArea;
 	private JTextArea p2_cardArea;
 	private JTextArea p3_cardArea;
@@ -111,7 +115,9 @@ public class InGamePanel extends JPanel {
 		JButton helpBtn = new JButton("도움말");
 		helpBtn.setBounds(565, 369, 68, 23);
 		add(helpBtn);
-
+		
+		// 초기화
+        playerNames = new ArrayList<>();
 	}
 	
 	@Override
@@ -124,4 +130,5 @@ public class InGamePanel extends JPanel {
 		ImageIcon NTocImg = new ImageIcon("images\\1.jpg");
 		g.drawImage(NTocImg.getImage(), 0, 0, 400,600,this);
 	}
+	
 }
