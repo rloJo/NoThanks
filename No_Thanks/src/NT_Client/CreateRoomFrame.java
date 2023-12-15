@@ -59,7 +59,7 @@ public class CreateRoomFrame extends JFrame {
 	 * Create the frame.
 	 */
 	public CreateRoomFrame() {
-		setTitle("\uBC29 \uB9CC\uB4E4\uAE30");
+		setTitle("방 생성하기");
 		setIconImage(Toolkit.getDefaultToolkit().getImage(CreateRoomFrame.class.getResource("/NT_Client/img/NT_icon.png")));
 		//EXIT -> DISPOSE로 변경: 해당 창만 닫히게
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -71,7 +71,7 @@ public class CreateRoomFrame extends JFrame {
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
-		JLabel roomNameLabel = new JLabel("\uBC29 \uC774\uB984");
+		JLabel roomNameLabel = new JLabel("방 제목");
 		roomNameLabel.setFont(new Font("굴림", Font.BOLD, 19));
 		roomNameLabel.setBounds(368, 91, 90, 40);
 		contentPane.add(roomNameLabel);
@@ -85,7 +85,7 @@ public class CreateRoomFrame extends JFrame {
 		passwdField.setBounds(187, 199, 160, 40);
 		contentPane.add(passwdField);
 		
-		JLabel roomNameLabel_1 = new JLabel("\uBE44\uBC00\uBC88\uD638");
+		JLabel roomNameLabel_1 = new JLabel("비밀번호");
 		roomNameLabel_1.setFont(new Font("굴림", Font.BOLD, 19));
 		roomNameLabel_1.setBounds(368, 199, 90, 40);
 		contentPane.add(roomNameLabel_1);
@@ -105,14 +105,14 @@ public class CreateRoomFrame extends JFrame {
 			}
 		});
 		
-		JRadioButton normalBtn = new JRadioButton("\uB178\uB9D0 \uBAA8\uB4DC");
+		JRadioButton normalBtn = new JRadioButton("일반 모드");
 		normalBtn.setBackground(new Color(255, 255, 255));
 		normalBtn.setFont(new Font("굴림", Font.PLAIN, 15));
 		normalBtn.setBounds(187, 297, 119, 23);
 		contentPane.add(normalBtn);
 		normalBtn.setSelected(true);
 		
-		JRadioButton specialBtn = new JRadioButton("\uD2B9\uBCC4 \uBAA8\uB4DC");
+		JRadioButton specialBtn = new JRadioButton("특별 모드");
 		specialBtn.setBackground(new Color(255, 255, 255));
 		specialBtn.setFont(new Font("굴림", Font.PLAIN, 15));
 		specialBtn.setBounds(324, 297, 119, 23);

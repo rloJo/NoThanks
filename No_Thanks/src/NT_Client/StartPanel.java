@@ -67,7 +67,7 @@ public class StartPanel extends JPanel {
 		titleLabel.setBounds(300, 90, 400, 80);
 		add(titleLabel);
 		
-		JLabel nickLabel = new JLabel("\uC0AC\uC6A9\uC790 \uC774\uB984 \uC785\uB825");
+		JLabel nickLabel = new JLabel("사용자 이름 입력");
 		nickLabel.setFont(new Font("굴림", Font.BOLD, 21));
 		nickLabel.setBounds(375, 329, 198, 45);
 		add(nickLabel);
