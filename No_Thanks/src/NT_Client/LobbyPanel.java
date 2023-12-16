@@ -8,34 +8,41 @@ import java.awt.TextArea;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.Socket;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.WindowConstants;
+
+import common.Msg;
 
 public class LobbyPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
-	public JFrame mainFrame;
-	private LobbyPanel lobbypanel;
+	private JFrame mainFrame;
+	private LobbyPanel lobbyPanel;
 	private InGamePanel IngamePanel;
 	private Container container;
 	private CardLayout cardLayout;
+	private CreateRoomFrame createRoomFrame;
+	
 	private JLabel waitingroominfoLabel;
-	private JList<String> userlist;
+	public Vector<NTRoom> ntRooms = new Vector<> ();
+	private JList<String> userlist; 
+	private DefaultListModel<String> userModel;
 	private JList<String> roomlist;
+	private DefaultListModel<String> roomModel;
 	private JLabel chatinfoLabel;
 	private JScrollPane scrollPane;
 	private TextArea textArea;
@@ -43,26 +50,27 @@ public class LobbyPanel extends JPanel {
 	private TextField chatTextField;
 	private JButton sendBtn;
 	private JButton CreateBtn;
+	
 	private static final int BUF_LEN = 128;
-	private String userName;
+	
+	public String userName;
+	private int roomId;
 	private Socket socket;
-	private InputStream is;
-	private OutputStream os;
-	private DataInputStream dis;
-    private DataOutputStream dos;
     private ObjectInputStream ois;
 	private ObjectOutputStream oos;
-	
-    CreateRoomFrame createRoomFrame;
-    private DefaultListModel<String> roomListModel;
-	/**
-	 * Create the panel.
-	 */
+    
+
+    
 	public LobbyPanel(Container container, JFrame mainFrame,String userName, String ip_addr, String port_num) {
-		lobbypanel = this;
+		SendMsgBtnClick sendAction = new  SendMsgBtnClick();
+		CreateRoomBtnClick createAction = new CreateRoomBtnClick();
+		
+		lobbyPanel = this;
 		this.mainFrame = mainFrame;
 		this.container = container;
 		this.cardLayout = (CardLayout) container.getLayout();
+		
+		
 		
 		setBackground(new Color(240, 240, 240));
 		setLayout(null);
@@ -74,10 +82,8 @@ public class LobbyPanel extends JPanel {
 		waitingroominfoLabel.setBounds(96, 10, 800, 45);
 		add(waitingroominfoLabel);
 		
-		roomListModel = new DefaultListModel<>();
-        
-		roomlist = new JList<String>();
-		roomlist.setModel(roomListModel);
+		roomModel = new DefaultListModel<String>();
+		roomlist = new JList<String>(roomModel);
 		roomlist.setBounds(96, 52, 800, 244);
 		add(roomlist);
 		
@@ -85,6 +91,7 @@ public class LobbyPanel extends JPanel {
 		chatinfoLabel.setFont(new Font("굴림", Font.BOLD, 24));
 		chatinfoLabel.setBounds(96, 306, 119, 33);
 		add(chatinfoLabel);
+		
 		
 		scrollPane = new JScrollPane();
 		scrollPane.setBounds(96, 336, 533, 183);
@@ -98,17 +105,21 @@ public class LobbyPanel extends JPanel {
 		userinfoLabel.setFont(new Font("굴림", Font.BOLD, 24));
 		userinfoLabel.setBounds(641, 306, 119, 33);
 		add(userinfoLabel);
-		
+	
 		chatTextField = new TextField();
 		chatTextField.setBounds(96, 525, 456, 31);
 		add(chatTextField);
-		
+		chatTextField.addActionListener(sendAction);
+        chatTextField.requestFocus();
+		     
 		sendBtn = new JButton("전송");
 		sendBtn.setFont(new Font("굴림", Font.BOLD, 18));
 		sendBtn.setBounds(558, 529, 71, 31);
 		add(sendBtn);
+		sendBtn.addActionListener(sendAction);
 		
-		userlist = new JList<String>();
+		userModel = new DefaultListModel<String>();
+		userlist = new JList<String>(userModel);
 		userlist.setBounds(651, 336, 245, 183);
 		add(userlist);
 		
@@ -119,96 +130,39 @@ public class LobbyPanel extends JPanel {
 		CreateBtn.setFont(new Font("굴림", Font.BOLD, 18));
 		CreateBtn.setBounds(650, 525, 97, 32);
 		add(CreateBtn);
+		CreateBtn.addActionListener(createAction);
 
         try {
             socket = new Socket(ip_addr, Integer.parseInt(port_num));
-            is = socket.getInputStream();
-            dis = new DataInputStream(is);
-            os = socket.getOutputStream();
-            dos = new DataOutputStream(os);
+            oos = new ObjectOutputStream(socket.getOutputStream());
+            oos.flush();
+            ois = new ObjectInputStream(socket.getInputStream());
 
-            SendMessage("/login " + userName);
+           
+            Msg loginMsg = new Msg(userName,"100", "login");
+            sendObject(loginMsg);
+            updateRoomList();
+            
             ListenNetwork net = new ListenNetwork();
             net.start();
-            Myaction action = new Myaction();
-            sendBtn.addActionListener(action); // 내부클래스로 액션 리스너를 상속받은 클래스로
             
-            CreateRoom create = new CreateRoom();
-            CreateBtn.addActionListener(create); // 방 생성 액션 리스너를 방 생성 버튼에 등록
-            
-            chatTextField.addActionListener(action);
-            chatTextField.requestFocus();
+               
         } catch (NumberFormatException | IOException e) {
             e.printStackTrace();
-            AppendText("connect error");
         }
-		
-
 	}
-	 // Server Message를 수신해서 화면에 표시
-    class ListenNetwork extends Thread {
-        public void run() {
-            while (true) {
-                try {
-                    // Use readUTF to read messages
-                	// 받은 메세지가 무엇으로 시작하는 지에 따라 다른 행동 수행
-                    String msg = dis.readUTF();
-                    if (msg.startsWith("/userlist ")) {
-                        String[] userList = msg.split(" ");
-                        String[] users = new String[userList.length - 1];
-                        System.arraycopy(userList, 1, users, 0, userList.length - 1);
-                        userlist.setListData(users);
-                        
-                    } else if (msg.startsWith("/roomlist ")) {           
-                    	// "/roomlist" 다음에 오는 문자열에서 방 정보 추출
-                        String roomListInfo = msg.substring("/roomlist ".length());
-                        String[] roomInfos = roomListInfo.split(" ");
-
-                        // 방 정보를 LobbyPanel에 업데이트
-                        for (int i = 0; i < roomInfos.length; i += 5) {
-                        	
-                        	if (i + 4 >= roomInfos.length) {
-                                System.err.println("Not enough elements in roomInfos array.");
-                                break;
-                            }
-                            int roomNum = Integer.parseInt(roomInfos[i].trim());
-                            String roomName = roomInfos[i + 1];
-                            int userCount = Integer.parseInt(roomInfos[i + 2].trim());
-                            String status = roomInfos[i + 3].trim();
-                            boolean isPass = Boolean.parseBoolean(roomInfos[i + 4]);
-
-                            // LobbyPanel 업데이트
-                            lobbypanel.updateRoomList(roomNum, roomName, userCount, status, isPass);
-                        }
-                        System.out.println("Received /roomlist message: " + msg);
-                    } else {
-                        AppendText(msg);
-                    }
-                } catch (IOException e) {
-                    AppendText("dis.read() error. 서버가 닫혔습니다.");
-                    try {
-                        dos.close();
-                        dis.close();
-                        socket.close();
-                        break;
-                    } catch (Exception ee) {
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-	// keyboard enter key 치면 서버로 전송
-	class Myaction implements ActionListener // 내부클래스로 액션 이벤트 처리 클래스
+	
+	// keyboard enter key를 누르거나 전송 버튼 클릭하면 서버로 전송 
+	class SendMsgBtnClick implements ActionListener // 내부클래스로 액션 이벤트 처리 클래스
 	{
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			 updateRoomList();
 			// Send button을 누르거나 메시지 입력하고 Enter key 치면
 			if (e.getSource() == sendBtn || e.getSource() == chatTextField) {
 				String msg = null;
 				msg = String.format("[%s] %s\n", userName, chatTextField.getText());
-				SendMessage(msg);
+				//SendMessage(msg);
 				chatTextField.setText(""); // 메세지를 보내고 나면 메세지 쓰는창을 비운다.
 				chatTextField.requestFocus(); // 메세지를 보내고 커서를 다시 텍스트 필드로 위치시킨다
 				if (msg.contains("/exit")) // 종료 처리
@@ -216,20 +170,71 @@ public class LobbyPanel extends JPanel {
 			}
 		}
 	}
+	
 	// 방 생성 버튼 누르면 생성 창 뜨게함
-	class CreateRoom implements ActionListener
+	class CreateRoomBtnClick implements ActionListener
 	{
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			createRoomFrame = new CreateRoomFrame();
-			
-			// 방 생성 정보를 전송
-			//createRoomFrame.addCreateRoomListener((roomName, isPass, roomType) ->
-		    //SendMessage("/roomlist " + "001 " + roomName + " " + "0 "+ roomType + " " + isPass));
+			createRoomFrame = new CreateRoomFrame(lobbyPanel);
+			createRoomFrame.setVisible(true);
 		}
-		
 	}
+	
+	//CreateRoomFrame에서 방 만들기 버튼을 누르면 실행되는 함수
+	public void createRoom(String roomName, Boolean isPass, String passWd, int roomType)
+	{
+		IngamePanel = new InGamePanel(container, lobbyPanel);
+		container.add(IngamePanel,"IngamePanel");
+		cardLayout.show(container, "IngamePanel");
+		
+		Msg msg = new Msg(userName,"200","방 생성");
+		msg.setUserName(userName);
+		msg.setRoomName(roomName);
+		msg.setIsPass(isPass);
+		msg.setPassWd(passWd);
+		msg.setMode(roomType);
+		sendObject(msg);
+		System.out.println("응 전송했어~");
+		
+		IngamePanel.p1_nameLabel.setText(userName);
+	}
+	
+	//server에 메세지 객체(Msg)를 전송하는 메소드 
+	public void sendObject(Object obj)
+	{
+		try {
+			if(obj instanceof Msg) {
+				oos.writeObject(obj);
+			}
+		} catch (Exception e) {
+			System.err.println("sendObject error: " + e.getMessage());
+	        e.printStackTrace();
+		}
+	}
+	
+	public void sendAllChatMessage(String message) {
+		try {
+			Msg msg = new Msg(userName,"400",message);
+			msg.setRoomId(IngamePanel.roomId);
+			oos.writeObject(msg);
+		} catch (Exception e) { 
+			System.out.println("sendChatMessage error");
+		}
+	}
+	
+	//server에 게임 내 유저끼리의 채팅 메시지 전송 메소드
+	public void sendChatMessage(String message) {
+		try {
+			Msg msg = new Msg(userName,"400",message);
+			msg.setRoomId(IngamePanel.roomId);
+			oos.writeObject(msg);
+		} catch (Exception e) { 
+			System.out.println("sendChatMessage error");
+		}
+	}
+	
     // 화면에 출력
     public void AppendText(String msg) {
         textArea.append(msg);
@@ -237,52 +242,213 @@ public class LobbyPanel extends JPanel {
     }
 
 
-    // Server에게 network으로 전송
-    public void SendMessage(String msg) {
-        try {
-            // Use writeUTF to send messages
-            dos.writeUTF(msg);
-        } catch (IOException e) {
-            AppendText("dos.write() error");
-            try {
-                dos.close();
-                dis.close();
-                socket.close();
-            } catch (IOException e1) {
-                e1.printStackTrace();
-                System.exit(0);
-            }
-        }
-    }
- // 클라이언트의 roomlist를 업데이트하기 위한 메서드
-    private void updateRoomList(int roomNum, String roomName, int userCount, String status, boolean isPass) {
-        // 방 정보를 나타내는 문자열 생성
-        String roomInfo = String.format("%-50d\t%-70s\t%-50d\t%-50s\t%-30s", roomNum, roomName, userCount, status, (isPass ? "비공개" : "공개"));
-        // roomListModel에 방 정보 추가
-        roomListModel.addElement(roomInfo);
-    }
     
-  
-      
-    public void createRoom(String roomName, String password, int peopleCount) {
-		createRoomFrame.dispose(); // 프레임 닫기
-		
-		IngamePanel = new InGamePanel(container, lobbypanel); 
-		container.add(IngamePanel, "IngamePanel");
-		cardLayout.show(container, "IngamePanel");
-		
-		RequestMsg RequestMsg = new RequestMsg(userName, "200", "방 만들기");
-		sendObject(RequestMsg);
+    //클라이언트의 roomList를 업데이트 하기 위한 메소드
+    public void updateRoomList() {
+		for(int i=0; i<ntRooms.size(); i++) {
+			NTRoom room = ntRooms.get(i);
+			String status = "";
+			if(room.getStatus() == 0) status = "대기 중";
+			else status = "게임 중";
+			String str = String.format("%-16s%-5d%-9s", room.getRoomName(), room.getUserCount(), status);
+			roomModel.set(i, str);
+		}
 	}
     
-    
-    public void sendObject(Object obj) {
- 		try {
- 			if(obj instanceof RequestMsg) {
- 				oos.writeObject(obj);
- 			}
- 		} catch (Exception e) {
- 			System.out.println("client to server RequestMsg  error");
- 		}
- 	}
+ // Server Message를 수신해서 화면에 표시
+    class ListenNetwork extends Thread {
+    	public ListenNetwork() {
+    		Msg roomList = new Msg(userName, "210", "roomList");
+    		sendObject(roomList);
+    	}
+    	
+        public void run() {
+            while (true) {
+                try {
+                	// 받은 메세지의 code에 따라 다른 행동 수행
+                    Object obj = null;
+                    String message = null;
+                    Msg msg;
+                    try {
+                    	obj = ois.readObject();
+                    } catch(ClassNotFoundException e) {
+                    	e.printStackTrace();
+                    	break;
+                    }
+                    
+                    if(obj == null)
+                    	break;
+                    
+                    if(obj instanceof Msg) {
+                    	msg = (Msg)obj;
+                    } else {
+                    	continue;
+                    }
+                    
+                    /* ---------------- code 분류 ----------------------------*/
+                    /*	100 - 로그인
+                     *  200 - 방 생성 정보를 담는다.
+                     *  201 - 생성된 방에 접속했다는 정보.
+                     *  202 - 방에 인원이 꽉차 접속하지 못했다는 정보
+                     *  210 - 서버로 부터 전체 방 목록이 전송된 경우
+                     *  211 - 서버로 부터 전체 접속자 목록이 전송된 경우
+                     *  300 - 게임 시작
+                     *  301 - 해당 카드를 먹는다는 정보 전달
+                     *  302 - 해당 카드 먹기 거부 정보 전달
+                     *  320 - 경기가 끝나고 승자가 정보 전달
+                     *  400 -
+                     *  420 - 게임 종료 
+                     *  430 - 종료된 방 삭제
+                     *  500 - 해당 방 채팅
+                     *  510 - 해당 방 user 표시
+                     */
+                    
+                    switch (msg.getCode())
+                    {
+                    case "200":
+                    	int roomId = msg.getRoomId();
+                    	String roomName = msg.getRoomName();
+                    	int userCount = msg.getUserCount();
+                    	boolean IsPass = msg.getIsPass();
+                    	String gameMode = (msg.getMode() == 0) ? "normal" : "special"; 
+                    	String status = (msg.getStatus() == 0) ? "대기 중" : "게임 중"; 
+                    	NTRoom newRoom = new NTRoom(roomId);
+                    	ntRooms.addElement(newRoom);
+                    	
+                    	String roomInfo = String.format("%-3s %-8s %-5d %-8s %-6s"
+                    			,msg.getRoomId()
+                    			,msg.getRoomName()
+                    			,msg.getUserCount()
+                    			,msg.getMode()
+                    			,status);
+                    	roomModel.addElement(roomInfo);
+                    	break;
+                    	
+                    	
+                    case "201":
+                    	lobbyPanel.roomId = msg.getRoomId();
+                    	for(int i=0; i<ntRooms.size();i++)
+                    	{
+                    		NTRoom room = ntRooms.get(i);
+                    		if(room.getRoomId() == msg.getRoomId())
+                    			room.users.add(lobbyPanel);
+                    	}
+                    	
+                    	IngamePanel = new InGamePanel(container, lobbyPanel);
+                    	IngamePanel.roomId = msg.getRoomId();
+                    	container.add(IngamePanel,"gamePanel");
+                    	IngamePanel.role = msg.getRole();
+                    	
+                    	if(msg.getRole() == msg.p1) {
+                    		IngamePanel.p1_nameLabel.setText(msg.getUserName());
+                    	}
+                    	
+                    	if(msg.getRole() == msg.p2) {
+                    		IngamePanel.p2_nameLabel.setText(msg.getUserName());
+                    	}
+                    	
+                    	if(msg.getRole() == msg.p3) {
+                    		IngamePanel.p3_nameLabel.setText(msg.getUserName());
+                        }  
+                    	
+                    	if(msg.getRole() == msg.p4) {
+                    		IngamePanel.p4_nameLabel.setText(msg.getUserName());
+                        }
+                    	
+                    	//mainFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+                    	cardLayout.show(container, "IngamePanel");
+                    	IngamePanel.roomUserList();
+                    	break;
+                    	
+                    	// 게임 방에 접속 할 수 없는 경우
+					case "202":
+						JOptionPane.showMessageDialog(mainFrame, msg.getData(), "error", JOptionPane.ERROR_MESSAGE);
+						break;
+						
+					case "210" :
+						int roomId2 = msg.getRoomId(); // 방 ID
+						String roomName2 = msg.getRoomName(); // 방 이름
+						int peopleCount2 = msg.getUserCount(); // 방 인원 수
+						
+						NTRoom newRoom2 = new NTRoom(roomId2); // 새로운 방 만들기
+						newRoom2.setRoomName(roomName2);
+						newRoom2.setUserCount(peopleCount2);
+						newRoom2.setStatus(msg.getStatus());
+						newRoom2.setIsPass(msg.getIsPass());
+						ntRooms.add(newRoom2); // 방 리스트에 추가
+						
+						String s = "";
+						if(newRoom2.getStatus() == 0) s = "게임 대기 중";
+						else s = "게임 중";
+						String roomStr2 = String.format("%-3s %-8s %d/4 %-8s %-6s"
+                    			,msg.getRoomId()
+                    			,msg.getRoomName()
+                    			,msg.getUserCount()
+                    			,msg.getMode()
+                    			,s);
+						roomModel.addElement(roomStr2); 
+						
+						roomlist.setModel(roomModel);
+						roomlist.repaint();
+						break;
+						
+					case "211":
+                    	String str = msg.getData();
+                    	StringTokenizer tokenizer = new StringTokenizer(str);
+                    	userModel.removeAllElements();
+                    	while(tokenizer.hasMoreTokens()) {
+                    		String user = tokenizer.nextToken();
+                    		userModel.addElement(user);
+                    	}
+                    	break;					
+						
+					case "300":
+						// 자신이 플레이어인 경우
+						if(IngamePanel != null && msg.getRoomId() == IngamePanel.roomId) {
+							String userNames = msg.getData();
+							StringTokenizer st = new StringTokenizer(userNames);
+							if(st.hasMoreTokens())							
+								IngamePanel.p1_nameLabel.setText(st.nextToken());
+							if(st.hasMoreTokens())
+								IngamePanel.p2_nameLabel.setText(st.nextToken());
+							if(st.hasMoreTokens())
+								IngamePanel.p3_nameLabel.setText(st.nextToken());
+							if(st.hasMoreTokens())
+								IngamePanel.p4_nameLabel.setText(st.nextToken());
+							
+							if(IngamePanel.order == 1) { // 순서가 1 인경우 
+								IngamePanel.status = 1; // status 1로 설정하여 카드를 먹을 수 있는 상태로 설정
+							}
+						}
+						// 플레이어가 아니면 방 리스트 상태 업데이트만 해주면 됨
+						else {
+							for(int i=0; i<ntRooms.size(); i++) {
+								if(ntRooms.get(i).getRoomId() == msg.getRoomId())
+									ntRooms.get(i).setStatus(1);
+							}
+						}
+						break;
+                    	
+                    case "400":
+						IngamePanel.AppendChat(msg.getUserName(), msg.getData());
+						break;
+                                     	         
+                    
+                    }
+                }
+                 catch (IOException e) {
+                    AppendText("오류 발생");
+                    try {
+                        oos.close();
+                        ois.close();
+                        socket.close();
+                        break;
+                    } catch (Exception ee) {
+                        break;
+                    }
+                } //c
+            }//w
+        }//run
+    }
 }
+  

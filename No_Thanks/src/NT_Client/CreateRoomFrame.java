@@ -23,42 +23,17 @@ import javax.swing.JButton;
 
 public class CreateRoomFrame extends JFrame {
 
+	private LobbyPanel lobbyPanel;
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
 	private JTextField roomNameField;
+	private JCheckBox passwdCheckBox;
 	private JPasswordField passwdField;
-
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					CreateRoomFrame frame = new CreateRoomFrame();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
-	// 방 생성 정보를 전송하기 위한 리스너 인터페이스 정의
-	public interface CreateRoomListener {
-        void onCreateRoom(String roomName, boolean isPass, String roomType);
-    }
-	private CreateRoomListener createRoomListener;
-
-    // 방 생성 정보를 받기 위한 메소드
-    public void addCreateRoomListener(CreateRoomListener listener) {
-        this.createRoomListener = listener;
-    }
-    
-    
-	/**
-	 * Create the frame.
-	 */
-	public CreateRoomFrame() {
+	private JRadioButton normalBtn;
+	private JRadioButton specialBtn;
+	
+	public CreateRoomFrame(LobbyPanel lobbyPanel) {
+		this.lobbyPanel = lobbyPanel;
 		setTitle("방 생성하기");
 		setIconImage(Toolkit.getDefaultToolkit().getImage(CreateRoomFrame.class.getResource("/NT_Client/img/NT_icon.png")));
 		//EXIT -> DISPOSE로 변경: 해당 창만 닫히게
@@ -90,7 +65,7 @@ public class CreateRoomFrame extends JFrame {
 		roomNameLabel_1.setBounds(368, 199, 90, 40);
 		contentPane.add(roomNameLabel_1);
 		
-		JCheckBox passwdCheckBox = new JCheckBox("");
+		passwdCheckBox = new JCheckBox("");
 		passwdCheckBox.setBackground(new Color(255, 255, 255));
 		passwdCheckBox.setBounds(456, 207, 26, 23);
 		contentPane.add(passwdCheckBox);
@@ -105,14 +80,14 @@ public class CreateRoomFrame extends JFrame {
 			}
 		});
 		
-		JRadioButton normalBtn = new JRadioButton("일반 모드");
+		normalBtn = new JRadioButton("일반 모드");
 		normalBtn.setBackground(new Color(255, 255, 255));
 		normalBtn.setFont(new Font("굴림", Font.PLAIN, 15));
 		normalBtn.setBounds(187, 297, 119, 23);
 		contentPane.add(normalBtn);
 		normalBtn.setSelected(true);
 		
-		JRadioButton specialBtn = new JRadioButton("특별 모드");
+		specialBtn = new JRadioButton("특별 모드");
 		specialBtn.setBackground(new Color(255, 255, 255));
 		specialBtn.setFont(new Font("굴림", Font.PLAIN, 15));
 		specialBtn.setBounds(324, 297, 119, 23);
@@ -127,22 +102,25 @@ public class CreateRoomFrame extends JFrame {
 		CreateBtn.setBounds(211, 347, 112, 34);
 		contentPane.add(CreateBtn);
 		
-		CreateBtn.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				String roomName = roomNameField.getText();
-		        boolean isPass = passwdCheckBox.isSelected();
-		        String roomType = (normalBtn.isSelected()) ? "Normal" : "Special";
-
-		        // 방 생성 정보를 리스너를 통해 전달
-		        if (createRoomListener != null) {
-		            createRoomListener.onCreateRoom(roomName, isPass, roomType);
-		        }
-
-		        // 창을 닫음
-		        dispose();
-			}
-		});
+		CreateBtn.addActionListener(new CreateBtnClick());
 		this.setResizable(false);
 	}
 	
+	//생성 버튼 클릭시 실행되는 이벤트 객체
+	// 방 이름과 비밀번호 여부 및 모드(노말, 스페셜) 정보를 넘긴다.
+	class CreateBtnClick implements ActionListener{
+		public void actionPerformed(ActionEvent e) {
+			String roomName = roomNameField.getText();
+	        boolean isPass = passwdCheckBox.isSelected();
+	        String passWd = null;
+	        if(isPass)
+	        {
+	        	passWd = new String(passwdField.getPassword());
+	        }
+	        
+	        int roomType = (normalBtn.isSelected()) ? 0 : 1;
+	        lobbyPanel.createRoom(roomName,isPass,passWd,roomType);
+	        dispose();
+		}
+	}
 }

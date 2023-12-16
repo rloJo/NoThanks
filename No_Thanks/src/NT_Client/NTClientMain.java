@@ -23,9 +23,6 @@ public class NTClientMain extends JFrame {
 	private Container container;
 	private StartPanel startPanel;
 
-	/**
-	 * Launch the application.
-	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
