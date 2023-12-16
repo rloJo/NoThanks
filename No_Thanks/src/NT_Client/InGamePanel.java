@@ -10,24 +10,36 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.border.MatteBorder;
 
-public class InGamePanel extends JPanel {
+import common.Msg;
 
+public class InGamePanel extends JPanel {
 	
+	public final int p1 = 0;
+	public final int p2 = 1;
+	public final int p3 = 2;
+	public final int p4 = 3;
+	
+	public int roomId;
+	public int role; //p1 p2 p3 p4
+	public int order; // 카드를 뽑는 순서
+	public int status;
 	
 	private Container container;
 	private CardLayout cardlayout;
-	private LobbyPanel lobbypanel;
-	private JLabel p1_nameLabel;
-	private JLabel p2_nameLabel;
-	private JLabel p3_nameLabel;
-	private JLabel p4_nameLabel;
-	private JTextArea p1_cardArea;
-	private JTextArea p2_cardArea;
-	private JTextArea p3_cardArea;
-	private JTextArea p4_cardArea;
+	private LobbyPanel lobbyPanel;
+	public JLabel p1_nameLabel;
+	public JLabel p2_nameLabel;
+	public JLabel p3_nameLabel;
+	public JLabel p4_nameLabel;
+	public JTextArea p1_cardArea;
+	public JTextArea p2_cardArea;
+	public JTextArea p3_cardArea;
+	public JTextArea p4_cardArea;
+	public JTextArea chattextArea;
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -35,7 +47,7 @@ public class InGamePanel extends JPanel {
 	 */
 	public InGamePanel(Container container, LobbyPanel lobbypanel) {
 		this.container = container;
-		this.lobbypanel = lobbypanel;
+		this.lobbyPanel = lobbypanel;
 		setLayout(null);
 		
 		JPanel p1_panel = new JPanel();
@@ -111,8 +123,25 @@ public class InGamePanel extends JPanel {
 		JButton helpBtn = new JButton("도움말");
 		helpBtn.setBounds(565, 369, 68, 23);
 		add(helpBtn);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(664, 183, 324, 173);
+		add(scrollPane);
+		
+		chattextArea = new JTextArea();
+		scrollPane.setViewportView(chattextArea);
 
 	}
+	
+	public void roomUserList() {
+		Msg msg = new Msg(lobbyPanel.userName,"401","userList");
+	}
+	
+	public void AppendChat(String userName, String str) {
+        chattextArea.append("["+ userName + "] : " + str + "\n");
+        chattextArea.setCaretPosition(chattextArea.getText().length());
+    }
+	
 	
 	@Override
 	protected void paintComponent(Graphics g) {

@@ -7,14 +7,11 @@ import javax.swing.JFrame;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-import NT_Client.NTClientView.Myaction;
-
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Container;
 
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 
 import java.awt.Font;
 import java.awt.Graphics;
@@ -100,7 +97,7 @@ public class StartPanel extends JPanel {
 		public void actionPerformed(ActionEvent e) {
 			String userName = nameTextField.getText().trim();
 			if(userName.equals("")) { // 이름 미입력 시
-				userName = "#" + Integer.toString(user.get_userCount()) + " user";
+				userName = "default user";
 			}
 		
 			String ip_addr = iptextField.getText().trim();
