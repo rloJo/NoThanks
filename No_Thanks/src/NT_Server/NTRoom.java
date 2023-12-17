@@ -15,15 +15,16 @@ public class NTRoom {
     private int status; //방의 상태
     private boolean isPass; // 비밀번호 여부
     private String passWd;
-    private int roomType; // 방 모드 변수 0:normal 1:special
+    private String roomType;
+    private int mode; // 방 모드 변수 0:normal 1:special
 
     public NTRoom(int roomId, String roomName, String roomType, String roomManager, boolean isPass) {
         this.roomId = roomId;
         this.roomName = roomName;
         this.users.add(roomManager);
         this.isPass = isPass; //비밀 번호 설정
-        this.roomType = (roomType == "normal") ? 0 : 1;
-        set_cards(this.roomType); // 초기 카드 배열을 mode에 따라 설정
+        this.mode = (roomType == "normal") ? 0 : 1;
+        set_cards(this.mode); // 초기 카드 배열을 mode에 따라 설정
     }
     
     public void set_cards (int roomType) // 카드를 섞는 메소드 
@@ -93,6 +94,10 @@ public class NTRoom {
         return passWd;
     }
     
+    public int getMode() {
+		return this.mode;
+	}
+    
     //Setter 메소드 추가
     public void setRoomId(int RoomId) {
 		this.roomId = roomId;
@@ -121,6 +126,5 @@ public class NTRoom {
 	public void setStatus(int i) {
 		this.status = i;
 		
-	}
-      
+	}  
 }
