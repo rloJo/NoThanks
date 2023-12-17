@@ -69,7 +69,7 @@ public class CreateRoomFrame extends JFrame {
 		passwdCheckBox.setBackground(new Color(255, 255, 255));
 		passwdCheckBox.setBounds(456, 207, 26, 23);
 		contentPane.add(passwdCheckBox);
-		passwdCheckBox.setSelected(true); // 처음에 체크되도록 설정
+		passwdCheckBox.setSelected(false); // 처음에 공개방 설정
 		passwdCheckBox.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {

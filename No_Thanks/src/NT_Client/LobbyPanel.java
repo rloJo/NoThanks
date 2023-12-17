@@ -8,6 +8,8 @@ import java.awt.TextArea;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -86,6 +88,7 @@ public class LobbyPanel extends JPanel {
 		roomlist = new JList<String>(roomModel);
 		roomlist.setBounds(96, 52, 800, 244);
 		add(roomlist);
+		roomlist.addMouseListener(new roomListClick());
 		
 		chatinfoLabel = new JLabel("전체 채팅");
 		chatinfoLabel.setFont(new Font("굴림", Font.BOLD, 24));
@@ -139,7 +142,7 @@ public class LobbyPanel extends JPanel {
             ois = new ObjectInputStream(socket.getInputStream());
 
            
-            Msg loginMsg = new Msg(userName,"100", "login");
+            Msg loginMsg = new Msg(userName,"Login", "login");
             sendObject(loginMsg);
             updateRoomList();
             
@@ -152,21 +155,45 @@ public class LobbyPanel extends JPanel {
         }
 	}
 	
+	
+	//roomList를 더블 클릭하면 해당방 접속 
+	class roomListClick extends MouseAdapter
+	{
+		public void mouseClicked(MouseEvent e) {
+            if (e.getClickCount() == 2) { // 더블클릭 확인
+                int selectedIndex = roomlist.getSelectedIndex();
+                
+                if (selectedIndex == -1)// 더블클릭된 방의 정보 가져오기
+                	return;
+                
+                NTRoom selectedRoom = ntRooms.get(selectedIndex);            
+                String passWd = null ;
+                if(selectedRoom.getIsPass()) {
+                	System.out.println("비번방");
+                	
+                	
+                }
+                Msg msg = new Msg(userName,"EnterRoom","방 접속");
+                msg.setRoomId(selectedRoom.getRoomId());
+                msg.setPassWd(selectedRoom.getPassWd());
+                System.out.println("selected roomId = " + selectedRoom.getRoomId());
+                sendObject(msg);	
+                
+            }
+        }	
+	}
+	
 	// keyboard enter key를 누르거나 전송 버튼 클릭하면 서버로 전송 
 	class SendMsgBtnClick implements ActionListener // 내부클래스로 액션 이벤트 처리 클래스
 	{
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			 updateRoomList();
 			// Send button을 누르거나 메시지 입력하고 Enter key 치면
 			if (e.getSource() == sendBtn || e.getSource() == chatTextField) {
-				String msg = null;
-				msg = String.format("[%s] %s\n", userName, chatTextField.getText());
-				//SendMessage(msg);
+				Msg msg = new Msg(userName,"AllChat",String.format("[%s] %s", userName, chatTextField.getText()));
+				sendObject(msg);
 				chatTextField.setText(""); // 메세지를 보내고 나면 메세지 쓰는창을 비운다.
 				chatTextField.requestFocus(); // 메세지를 보내고 커서를 다시 텍스트 필드로 위치시킨다
-				if (msg.contains("/exit")) // 종료 처리
-					System.exit(0);
 			}
 		}
 	}
@@ -189,15 +216,14 @@ public class LobbyPanel extends JPanel {
 		container.add(IngamePanel,"IngamePanel");
 		cardLayout.show(container, "IngamePanel");
 		
-		Msg msg = new Msg(userName,"200","방 생성");
+		Msg msg = new Msg(userName,"CreateRoomInfo","방 생성");
 		msg.setUserName(userName);
 		msg.setRoomName(roomName);
 		msg.setIsPass(isPass);
 		msg.setPassWd(passWd);
 		msg.setMode(roomType);
 		sendObject(msg);
-		System.out.println("응 전송했어~");
-		
+		/*--아래코드 수정-*/
 		IngamePanel.p1_nameLabel.setText(userName);
 	}
 	
@@ -258,7 +284,7 @@ public class LobbyPanel extends JPanel {
  // Server Message를 수신해서 화면에 표시
     class ListenNetwork extends Thread {
     	public ListenNetwork() {
-    		Msg roomList = new Msg(userName, "210", "roomList");
+    		Msg roomList = new Msg(userName, "RoomList", "roomList");
     		sendObject(roomList);
     	}
     	
@@ -286,12 +312,19 @@ public class LobbyPanel extends JPanel {
                     }
                     
                     /* ---------------- code 분류 ----------------------------*/
-                    /*	100 - 로그인
-                     *  200 - 방 생성 정보를 담는다.
-                     *  201 - 생성된 방에 접속했다는 정보.
-                     *  202 - 방에 인원이 꽉차 접속하지 못했다는 정보
-                     *  210 - 서버로 부터 전체 방 목록이 전송된 경우
-                     *  211 - 서버로 부터 전체 접속자 목록이 전송된 경우
+                    /*	"Login" -> 로그인 100
+                     *  "AllChat" -> 전체 채팅 111
+                     *  "CreateRoomInfo" -> 방 생성 정보를 알린다. 200
+                     *  "EnterRoom" -> 생성된 방에 접속했다는 정보. 201
+                     *  
+                     *  
+                     *  
+                     *  "RoomFull" -> 방에 인원이 참 또는 비밀번호 오류 202
+                     *  "RoomList" - 서버로 부터 전체 방 목록이 전송된 경우 210
+                     *  "UserList - 서버로 부터 전체 접속자 목록이 전송된 경우 211
+                     *  
+                     *  
+                     *  
                      *  300 - 게임 시작
                      *  301 - 해당 카드를 먹는다는 정보 전달
                      *  302 - 해당 카드 먹기 거부 정보 전달
@@ -301,11 +334,19 @@ public class LobbyPanel extends JPanel {
                      *  430 - 종료된 방 삭제
                      *  500 - 해당 방 채팅
                      *  510 - 해당 방 user 표시
+                     *  
+       
                      */
                     
                     switch (msg.getCode())
                     {
-                    case "200":
+                    case "AllChat":
+                    	String chat = msg.getData();
+                    	AppendText(chat +"\n");
+                    	break;
+                    
+                    
+                    case "CreateRoomInfo":
                     	int roomId = msg.getRoomId();
                     	String roomName = msg.getRoomName();
                     	int userCount = msg.getUserCount();
@@ -325,19 +366,24 @@ public class LobbyPanel extends JPanel {
                     	break;
                     	
                     	
-                    case "201":
+                    case "EnterRoom":
                     	lobbyPanel.roomId = msg.getRoomId();
+                    	System.out.println(msg.getRoomId());
                     	for(int i=0; i<ntRooms.size();i++)
                     	{
                     		NTRoom room = ntRooms.get(i);
-                    		if(room.getRoomId() == msg.getRoomId())
+                    		if(room.getRoomId() == msg.getRoomId()) {             
                     			room.users.add(lobbyPanel);
+                    		}
+              
                     	}
+              
                     	
                     	IngamePanel = new InGamePanel(container, lobbyPanel);
                     	IngamePanel.roomId = msg.getRoomId();
-                    	container.add(IngamePanel,"gamePanel");
+                    	container.add(IngamePanel,"IngamePanel");
                     	IngamePanel.role = msg.getRole();
+                    	
                     	
                     	if(msg.getRole() == msg.p1) {
                     		IngamePanel.p1_nameLabel.setText(msg.getUserName());
@@ -355,17 +401,17 @@ public class LobbyPanel extends JPanel {
                     		IngamePanel.p4_nameLabel.setText(msg.getUserName());
                         }
                     	
-                    	//mainFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+              	
                     	cardLayout.show(container, "IngamePanel");
                     	IngamePanel.roomUserList();
                     	break;
                     	
                     	// 게임 방에 접속 할 수 없는 경우
-					case "202":
+					case "RoomFull":
 						JOptionPane.showMessageDialog(mainFrame, msg.getData(), "error", JOptionPane.ERROR_MESSAGE);
 						break;
 						
-					case "210" :
+					case "RoomList" :
 						int roomId2 = msg.getRoomId(); // 방 ID
 						String roomName2 = msg.getRoomName(); // 방 이름
 						int peopleCount2 = msg.getUserCount(); // 방 인원 수
@@ -392,7 +438,7 @@ public class LobbyPanel extends JPanel {
 						roomlist.repaint();
 						break;
 						
-					case "211":
+					case "UserList":
                     	String str = msg.getData();
                     	StringTokenizer tokenizer = new StringTokenizer(str);
                     	userModel.removeAllElements();
@@ -401,7 +447,8 @@ public class LobbyPanel extends JPanel {
                     		userModel.addElement(user);
                     	}
                     	break;					
-						
+						                   	                    	
+                                   	
 					case "300":
 						// 자신이 플레이어인 경우
 						if(IngamePanel != null && msg.getRoomId() == IngamePanel.roomId) {

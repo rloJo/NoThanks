@@ -5,10 +5,11 @@ import java.util.Vector;
 public class NTRoom {
 	private int roomId;
 	private String roomName;
-	private int roomType ; // 0 normal  1 special
+	private int mode ; // 0 normal  1 special
 	private int userCount = 0;
 	private int status = 0;
 	private boolean isPass = false;
+	private String passWd;
 	
 	public Vector<LobbyPanel> users = new Vector<>();
 	
@@ -19,6 +20,10 @@ public class NTRoom {
 	//getter ¸Þ¼Òµå 
 	public int getRoomId() {
 		return this.roomId;
+	}
+	
+	public int getMode() {
+		return this.mode;
 	}
 	
 	public int getUserCount() {
@@ -35,6 +40,10 @@ public class NTRoom {
 	
 	public boolean getIsPass() {
 		return this.isPass;
+	}
+	
+	public String getPassWd() {
+		return this.passWd;
 	}
 	
 	public int getUsers() {
@@ -59,7 +68,7 @@ public class NTRoom {
 	}
 	
 	public void setUserCount () {
-		this.userCount = users.size();
+		this.userCount++;
 	}
 	
 	public void setStatus(int i) {
