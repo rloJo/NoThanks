@@ -6,6 +6,7 @@ import java.awt.Container;
 import java.awt.Font;
 import java.awt.Graphics;
 
+import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -41,7 +42,8 @@ public class InGamePanel extends JPanel {
 	public JTextArea p4_cardArea;
 	public JTextArea chattextArea;
 	private static final long serialVersionUID = 1L;
-
+	
+	public DefaultListModel<String> roomUserModel;
 	/**
 	 * Create the panel.
 	 */
@@ -101,7 +103,7 @@ public class InGamePanel extends JPanel {
 		p4_panel.setBounds(671, 451, 305, 91);
 		add(p4_panel);
 		
-		JLabel p4_nameLabel = new JLabel("p_name\r\n");
+		p4_nameLabel = new JLabel("p_name\r\n");
 		p4_nameLabel.setFont(new Font("±¼¸²", Font.BOLD, 18));
 		p4_nameLabel.setBounds(213, 29, 80, 33);
 		p4_panel.add(p4_nameLabel);
@@ -134,8 +136,10 @@ public class InGamePanel extends JPanel {
 	}
 	
 	public void roomUserList() {
-		Msg msg = new Msg(lobbyPanel.userName,"401","userList");
-	}
+        Msg msg = new Msg(lobbyPanel.userName, "RoomRefresh", "userList");
+        msg.setRoomId(this.roomId);
+        lobbyPanel.sendObject(msg);
+    }
 	
 	public void AppendChat(String userName, String str) {
         chattextArea.append("["+ userName + "] : " + str + "\n");

@@ -418,6 +418,34 @@ public class LobbyPanel extends JPanel {
                     	IngamePanel.roomUserList();
                     	break;
                     	
+                    case "RoomRefresh" :
+                    	//IngamePanel.roomUserModel.removeAllElements();
+                        String allUser = msg.getData();
+                        StringTokenizer st2 = new StringTokenizer(allUser);
+                        StringTokenizer st3 = new StringTokenizer(allUser);
+                        int index=0;
+                        while(st2.hasMoreElements()) {
+                        	
+                            String name = st2.nextToken();
+                            index++;
+                            
+                        }
+                        if(index == 2) {
+                        	IngamePanel.p1_nameLabel.setText(st3.nextToken());                    
+                    		IngamePanel.p2_nameLabel.setText(st3.nextToken());
+                        }
+                        if(index == 3) {
+                        	IngamePanel.p1_nameLabel.setText(st3.nextToken());                    
+                    		IngamePanel.p2_nameLabel.setText(st3.nextToken());
+                    		IngamePanel.p3_nameLabel.setText(st3.nextToken());
+                        }
+                        if(index == 4) {
+                        	IngamePanel.p1_nameLabel.setText(st3.nextToken());                    
+                    		IngamePanel.p2_nameLabel.setText(st3.nextToken());
+                    		IngamePanel.p3_nameLabel.setText(st3.nextToken());
+                    		IngamePanel.p4_nameLabel.setText(st3.nextToken());
+                        }
+                    	break;
                     	// 게임 방에 접속 할 수 없는 경우
 					case "RoomFull":
 						JOptionPane.showMessageDialog(mainFrame, msg.getData(), "error", JOptionPane.ERROR_MESSAGE);

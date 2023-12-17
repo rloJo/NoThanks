@@ -305,6 +305,29 @@ public class NTServer extends JFrame {
 						msg2.setRoomId(msg.getRoomId());
 						WriteOne(msg2);						
 					}
+					
+					else if (msg.getCode().equals("RoomRefresh")) { //방 접속자 목록...
+						NTRoom findRoom = null;
+						String data = "";
+						for(int i=0; i<RoomVector.size(); i++) {
+							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
+							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
+								findRoom = ntRoom; // 찾은 방 저장
+								break;
+							}
+						}
+						
+						// player
+						for(int j=0; j<findRoom.users.size(); j++) {
+							data += findRoom.users.elementAt(j) + " ";
+						}						
+						
+						for(int i=0; i<user_vc.size(); i++) {
+							UserService u = (NTServer.UserService) user_vc.get(i);
+							if(u.roomId == msg.getRoomId())
+								u.WriteOne(new Msg("SERVER", "RoomRefresh", data));
+						}
+					}
 						
 					else if(msg.getCode().matches("EnterRoom")) { 
 						NTRoom findRoom = null;
@@ -332,74 +355,64 @@ public class NTServer extends JFrame {
 						 if(findRoom.getUserCount() == 1) {
 							//해당 방 유저 목록 띄우기 
 							String data = findRoom.users.get(0) + " " + msg.getUserName();
-							System.out.println("usercount == 1:" + data);
+							System.out.println("usercount == 1(사용자2명):" + data);
 							Msg obj = new Msg(userName,"EnterRoom", data);
 							obj.setRole(obj.p2);
 							obj.setRoomId(msg.getRoomId());
 							this.role = obj.p2;
 							this.roomId = msg.getRoomId();
 							System.out.println("방번호:" + msg.getRoomId());
+							
 							WriteOne(obj);
+							System.out.println(obj.getUserName());
+							obj.setUserName(findRoom.users.get(0));
+							WriteOne(obj);
+							
 							findRoom.users.add(userName); // player 리스트에 추가
 						}
 						
 						else if(findRoom.getUserCount() == 2) {
 							//해당 방 유저 목록 띄우기 
 							String data = findRoom.users.get(0) + " " +findRoom.users.get(1) +" " + msg.getUserName();	
-							System.out.println("usercount == 2:" + data);
+							System.out.println("usercount == 2(사용자3명):" + data);
 							Msg obj = new Msg(userName,"EnterRoom", data);
 							obj.setRole(obj.p3);
 							obj.setRoomId(msg.getRoomId());
 							this.role = obj.p3;
 							this.roomId = msg.getRoomId();
 							System.out.println("방번호:" + msg.getRoomId());
+							
 							WriteOne(obj);
+							obj.setUserName(findRoom.users.get(0));
+							WriteOne(obj);
+							obj.setUserName(findRoom.users.get(1));
+							WriteOne(obj);
+							
 							findRoom.users.add(userName); // player 리스트에 추가
 						}
 						else if(findRoom.getUserCount() == 3) {
 							String data = findRoom.users.get(0) + " " +findRoom.users.get(1) +" "
 									+findRoom.users.get(2) +" "+ msg.getUserName();
+							System.out.println("usercount == 3(사용자4명):" + data);
 							Msg obj = new Msg(userName, "EnterRoom", data);
 							obj.setRole(obj.p4);
 							obj.setRoomId(msg.getRoomId());
 							this.role = obj.p4;
-							this.roomId = msg.getRoomId();
-							//System.out.println("role : " + this.role);
+							this.roomId = msg.getRoomId();	
+							
 							WriteOne(obj);
+							obj.setUserName(findRoom.users.get(0));
+							WriteOne(obj);
+							obj.setUserName(findRoom.users.get(1));
+							WriteOne(obj);
+							obj.setUserName(findRoom.users.get(2));
+							WriteOne(obj);
+							
+							
 							findRoom.users.add(userName); // player 리스트에 추가
 						}
 						
-						/*else if(findRoom.getUserCount() == 4) {
-							String data = findRoom.users.get(0) + " " + msg.getUserName();
-							Msg obj = new Msg(userName, "EnterRoom", data);
-							obj.setRole(obj.p4);
-							obj.setRoomId(msg.getRoomId());
-							this.role = obj.p4;
-							this.roomId = msg.getRoomId();
-							//System.out.println("role : " + this.role);
-							WriteOne(obj);
-							findRoom.users.add(userName); // player 리스트에 추가
-						}*/
-						
-						/*if(findRoom.users.size() == 4) { //게임 시작
-							Msg obj = new Msg("server", "400", "게임 시작!!"); //게임 시작 메시지를 방에 있는 모든 object에게 뿌림
-							for (int i = 0; i < user_vc.size(); i++) {
-								UserService user = (UserService) user_vc.elementAt(i);
-								if(findRoom.getRoomId() == user.roomId) {
-									user.WriteOne(obj);
-								}
-							}
-							
-							findRoom.setStatus(1);
-							String data = findRoom.users.elementAt(0) + " " + findRoom.users.elementAt(1);
-							obj = new Msg("server", "300", data);
-							obj.setRoomId(findRoom.getRoomId());
-							obj.setStatus(findRoom.getStatus());
-							WriteAll(obj);
-							
-							AppendText("[" + roomId + "]방 게임 시작!!");
-							AppendText("현재 [" + roomId + "]방에 있는 플레이어 수 : " + findRoom.users.size());
-						}*/
+						 
 					}
 					
 					String info = String.format("[%s]님이 [%s]방에 접속하셨습니다.", msg.getUserName(), msg.getData());
