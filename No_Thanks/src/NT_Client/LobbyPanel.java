@@ -383,22 +383,34 @@ public class LobbyPanel extends JPanel {
                     	IngamePanel.roomId = msg.getRoomId();
                     	container.add(IngamePanel,"IngamePanel");
                     	IngamePanel.role = msg.getRole();
-                    	
-                    	
+                    	System.out.println("현재 유저:" + msg.getUserName());
+                    	System.out.println("msg.getRole(): " + msg.getRole());
+                    	//System.out.println("inGamePanel상태:" + IngamePanel);
                     	if(msg.getRole() == msg.p1) {
-                    		IngamePanel.p1_nameLabel.setText(msg.getUserName());
+                    		IngamePanel.p1_nameLabel.setText(msg.getData());
                     	}
                     	
                     	if(msg.getRole() == msg.p2) {
-                    		IngamePanel.p2_nameLabel.setText(msg.getUserName());
+                    		//IngamePanel.p2_nameLabel.setText(msg.getUserName());
+                    		StringTokenizer tokenizer = new StringTokenizer(msg.getData());                             
+                    		IngamePanel.p1_nameLabel.setText(tokenizer.nextToken());                    
+                    		IngamePanel.p2_nameLabel.setText(tokenizer.nextToken());
+                    		
                     	}
                     	
                     	if(msg.getRole() == msg.p3) {
-                    		IngamePanel.p3_nameLabel.setText(msg.getUserName());
+                    		StringTokenizer tokenizer = new StringTokenizer(msg.getData());                             
+                    		IngamePanel.p1_nameLabel.setText(tokenizer.nextToken());
+                    		IngamePanel.p2_nameLabel.setText(tokenizer.nextToken());
+                    		IngamePanel.p3_nameLabel.setText(tokenizer.nextToken());
                         }  
                     	
                     	if(msg.getRole() == msg.p4) {
-                    		IngamePanel.p4_nameLabel.setText(msg.getUserName());
+                    		StringTokenizer tokenizer = new StringTokenizer(msg.getData());                             
+                    		IngamePanel.p1_nameLabel.setText(tokenizer.nextToken());
+                    		IngamePanel.p2_nameLabel.setText(tokenizer.nextToken());
+                    		IngamePanel.p3_nameLabel.setText(tokenizer.nextToken());
+                    		IngamePanel.p4_nameLabel.setText(tokenizer.nextToken());
                         }
                     	
               	

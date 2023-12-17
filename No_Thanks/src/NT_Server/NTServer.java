@@ -328,46 +328,37 @@ public class NTServer extends JFrame {
 							WriteOne(new Msg("SERVER","RoomFull","틀린 비밀번호"));
 							continue;
 						}
-						
-						 if(findRoom.getUserCount() == 0) {
+						System.out.println("유저카운트" + findRoom.getUserCount());
+						 if(findRoom.getUserCount() == 1) {
 							//해당 방 유저 목록 띄우기 
-							String data = findRoom.users.get(0) + " " + msg.getUserName();			
+							String data = findRoom.users.get(0) + " " + msg.getUserName();
+							System.out.println("usercount == 1:" + data);
 							Msg obj = new Msg(userName,"EnterRoom", data);
 							obj.setRole(obj.p2);
 							obj.setRoomId(msg.getRoomId());
 							this.role = obj.p2;
 							this.roomId = msg.getRoomId();
-							System.out.println(msg.getRoomId());
+							System.out.println("방번호:" + msg.getRoomId());
 							WriteOne(obj);
 							findRoom.users.add(userName); // player 리스트에 추가
 						}
 						
-						else if(findRoom.getUserCount() == 1) {
-							//해당 방 유저 목록 띄우기 
-							String data = findRoom.users.get(0) + " " + msg.getUserName();			
-							Msg obj = new Msg(userName,"EnterRoom", data);
-							obj.setRole(obj.p2);
-							obj.setRoomId(msg.getRoomId());
-							this.role = obj.p2;
-							this.roomId = msg.getRoomId();
-							System.out.println(msg.getRoomId());
-							WriteOne(obj);
-							findRoom.users.add(userName); // player 리스트에 추가
-						}
 						else if(findRoom.getUserCount() == 2) {
-							String data = findRoom.users.get(0) + " " +findRoom.users.get(1) +" " + msg.getUserName();
-							Msg obj = new Msg(userName, "EnterRoom", data);
+							//해당 방 유저 목록 띄우기 
+							String data = findRoom.users.get(0) + " " +findRoom.users.get(1) +" " + msg.getUserName();	
+							System.out.println("usercount == 2:" + data);
+							Msg obj = new Msg(userName,"EnterRoom", data);
 							obj.setRole(obj.p3);
 							obj.setRoomId(msg.getRoomId());
 							this.role = obj.p3;
 							this.roomId = msg.getRoomId();
-							//System.out.println("role : " + this.role);
+							System.out.println("방번호:" + msg.getRoomId());
 							WriteOne(obj);
 							findRoom.users.add(userName); // player 리스트에 추가
 						}
-						
 						else if(findRoom.getUserCount() == 3) {
-							String data = findRoom.users.get(0) + " " + msg.getUserName();
+							String data = findRoom.users.get(0) + " " +findRoom.users.get(1) +" "
+									+findRoom.users.get(2) +" "+ msg.getUserName();
 							Msg obj = new Msg(userName, "EnterRoom", data);
 							obj.setRole(obj.p4);
 							obj.setRoomId(msg.getRoomId());
@@ -377,6 +368,18 @@ public class NTServer extends JFrame {
 							WriteOne(obj);
 							findRoom.users.add(userName); // player 리스트에 추가
 						}
+						
+						/*else if(findRoom.getUserCount() == 4) {
+							String data = findRoom.users.get(0) + " " + msg.getUserName();
+							Msg obj = new Msg(userName, "EnterRoom", data);
+							obj.setRole(obj.p4);
+							obj.setRoomId(msg.getRoomId());
+							this.role = obj.p4;
+							this.roomId = msg.getRoomId();
+							//System.out.println("role : " + this.role);
+							WriteOne(obj);
+							findRoom.users.add(userName); // player 리스트에 추가
+						}*/
 						
 						/*if(findRoom.users.size() == 4) { //게임 시작
 							Msg obj = new Msg("server", "400", "게임 시작!!"); //게임 시작 메시지를 방에 있는 모든 object에게 뿌림

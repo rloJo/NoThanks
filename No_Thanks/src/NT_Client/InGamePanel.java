@@ -86,7 +86,7 @@ public class InGamePanel extends JPanel {
 		p2_panel.setBounds(671, 27, 305, 91);
 		add(p2_panel);
 		
-		JLabel p2_nameLabel = new JLabel("p_name\r\n");
+		p2_nameLabel = new JLabel("p_name\r\n");
 		p2_nameLabel.setFont(new Font("±¼¸²", Font.BOLD, 18));
 		p2_nameLabel.setBounds(213, 29, 80, 33);
 		p2_panel.add(p2_nameLabel);

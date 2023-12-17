@@ -107,7 +107,7 @@ public class Msg implements Serializable{
 		this.data = data;
 	}
 	
-	public void setRole(int Role) {
+	public void setRole(int role) {
 		this.role = role;
 	}
 	

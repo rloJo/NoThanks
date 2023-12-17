@@ -24,6 +24,7 @@ public class NTRoom {
         this.users.add(roomManager);
         this.isPass = isPass; //비밀 번호 설정
         this.mode = (roomType == "normal") ? 0 : 1;
+        this.userCount = users.size();
         set_cards(this.mode); // 초기 카드 배열을 mode에 따라 설정
     }
     
@@ -75,7 +76,7 @@ public class NTRoom {
     }
 
     public int getUserCount() {
-        return userCount;
+        return users.size();
     }
 
     public int getStatus() {
