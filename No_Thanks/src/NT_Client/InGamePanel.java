@@ -5,6 +5,8 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -16,6 +18,7 @@ import javax.swing.JTextArea;
 import javax.swing.border.MatteBorder;
 
 import common.Msg;
+import javax.swing.JTextField;
 
 public class InGamePanel extends JPanel {
 	
@@ -24,6 +27,7 @@ public class InGamePanel extends JPanel {
 	public final int p3 = 2;
 	public final int p4 = 3;
 	
+	public String userName;
 	public int roomId;
 	public int role; //p1 p2 p3 p4
 	public int order; // 카드를 뽑는 순서
@@ -44,12 +48,14 @@ public class InGamePanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 	
 	public DefaultListModel<String> roomUserModel;
+	private JTextField chatField;
 	/**
 	 * Create the panel.
 	 */
-	public InGamePanel(Container container, LobbyPanel lobbypanel) {
+	public InGamePanel(Container container, LobbyPanel lobbypanel, String userName) {
 		this.container = container;
 		this.lobbyPanel = lobbypanel;
+		this.userName = userName;
 		setLayout(null);
 		
 		JPanel p1_panel = new JPanel();
@@ -61,10 +67,12 @@ public class InGamePanel extends JPanel {
 		p1_nameLabel = new JLabel("p_name\r\n");
 		p1_nameLabel.setFont(new Font("굴림", Font.BOLD, 18));
 		p1_nameLabel.setBounds(12, 30, 85, 33);
+		
 		p1_panel.add(p1_nameLabel);
 		
 		p1_cardArea = new JTextArea();
 		p1_cardArea.setBounds(98, 10, 195, 71);
+		p1_cardArea.setEditable(false);
 		p1_panel.add(p1_cardArea);
 		
 		JPanel p3_panel = new JPanel();
@@ -80,6 +88,7 @@ public class InGamePanel extends JPanel {
 		
 		p3_cardArea = new JTextArea();
 		p3_cardArea.setBounds(98, 10, 195, 71);
+		p3_cardArea.setEditable(false);
 		p3_panel.add(p3_cardArea);
 		
 		JPanel p2_panel = new JPanel();
@@ -95,6 +104,7 @@ public class InGamePanel extends JPanel {
 		
 		p2_cardArea = new JTextArea();
 		p2_cardArea.setBounds(12, 10, 195, 71);
+		p3_cardArea.setEditable(false);
 		p2_panel.add(p2_cardArea);
 		
 		JPanel p4_panel = new JPanel();
@@ -110,6 +120,7 @@ public class InGamePanel extends JPanel {
 		
 		p4_cardArea = new JTextArea();
 		p4_cardArea.setBounds(12, 10, 195, 71);
+		p4_cardArea.setEditable(false);
 		p4_panel.add(p4_cardArea);
 		
 		JButton openBtn = new JButton("넘기기");
@@ -131,7 +142,14 @@ public class InGamePanel extends JPanel {
 		add(scrollPane);
 		
 		chattextArea = new JTextArea();
+		chattextArea.setEditable(false);
 		scrollPane.setViewportView(chattextArea);
+		
+		chatField = new JTextField();
+		chatField.setBounds(664, 370, 324, 33);
+		chatField.addActionListener(new SendMsgBtnClick());
+		add(chatField);
+		chatField.setColumns(10);
 
 	}
 	
@@ -142,11 +160,26 @@ public class InGamePanel extends JPanel {
     }
 	
 	public void AppendChat(String userName, String str) {
-        chattextArea.append("["+ userName + "] : " + str + "\n");
-        chattextArea.setCaretPosition(chattextArea.getText().length());
+		chattextArea.append("["+ userName + "] : " + str + "\n");
+		chattextArea.setCaretPosition(chattextArea.getText().length());
     }
 	
-	
+	// keyboard enter key누르면 서버로 전송 
+	class SendMsgBtnClick implements ActionListener // 내부클래스로 액션 이벤트 처리 클래스
+	{
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// Send button을 누르거나 메시지 입력하고 Enter key 치면
+			if (e.getSource() == chatField) {
+				String msg = null;
+                msg = chatField.getText();
+                AppendChat(userName, msg); // 채팅창 우측에 메시지 출력
+                lobbyPanel.sendChatMessage(msg); // 메시지 전송
+                chatField.setText(""); // 입력창 초기화
+                chatField.requestFocus(); // 포커스 주기
+			}
+		}
+	}
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);

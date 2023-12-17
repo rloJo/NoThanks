@@ -212,7 +212,7 @@ public class LobbyPanel extends JPanel {
 	//CreateRoomFrame에서 방 만들기 버튼을 누르면 실행되는 함수
 	public void createRoom(String roomName, Boolean isPass, String passWd, int roomType)
 	{
-		IngamePanel = new InGamePanel(container, lobbyPanel);
+		IngamePanel = new InGamePanel(container, lobbyPanel, this.userName);
 		container.add(IngamePanel,"IngamePanel");
 		cardLayout.show(container, "IngamePanel");
 		
@@ -240,20 +240,10 @@ public class LobbyPanel extends JPanel {
 		}
 	}
 	
-	public void sendAllChatMessage(String message) {
-		try {
-			Msg msg = new Msg(userName,"400",message);
-			msg.setRoomId(IngamePanel.roomId);
-			oos.writeObject(msg);
-		} catch (Exception e) { 
-			System.out.println("sendChatMessage error");
-		}
-	}
-	
 	//server에 게임 내 유저끼리의 채팅 메시지 전송 메소드
 	public void sendChatMessage(String message) {
 		try {
-			Msg msg = new Msg(userName,"400",message);
+			Msg msg = new Msg(userName,"RoomChat",message);
 			msg.setRoomId(IngamePanel.roomId);
 			oos.writeObject(msg);
 		} catch (Exception e) { 
@@ -329,7 +319,8 @@ public class LobbyPanel extends JPanel {
                      *  301 - 해당 카드를 먹는다는 정보 전달
                      *  302 - 해당 카드 먹기 거부 정보 전달
                      *  320 - 경기가 끝나고 승자가 정보 전달
-                     *  400 -
+                     *  400 - 
+                     *  
                      *  420 - 게임 종료 
                      *  430 - 종료된 방 삭제
                      *  500 - 해당 방 채팅
@@ -379,7 +370,7 @@ public class LobbyPanel extends JPanel {
                     	}
               
                     	
-                    	IngamePanel = new InGamePanel(container, lobbyPanel);
+                    	IngamePanel = new InGamePanel(container, lobbyPanel, msg.getUserName());
                     	IngamePanel.roomId = msg.getRoomId();
                     	container.add(IngamePanel,"IngamePanel");
                     	IngamePanel.role = msg.getRole();
@@ -516,7 +507,7 @@ public class LobbyPanel extends JPanel {
 						}
 						break;
                     	
-                    case "400":
+                    case "RoomChat":
 						IngamePanel.AppendChat(msg.getUserName(), msg.getData());
 						break;
                                      	         

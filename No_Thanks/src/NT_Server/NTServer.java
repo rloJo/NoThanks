@@ -264,6 +264,21 @@ public class NTServer extends JFrame {
 						WriteAll(msg);
 					}
 					
+					else if(msg.getCode().equals("RoomChat"))
+					{
+						String sender = String.format("[%s] %s", msg.getUserName(), msg.getData());
+						AppendText(sender);
+						for(int i=0; i<user_vc.size(); i++) {
+							UserService user = (UserService) user_vc.elementAt(i);
+                            if (user != this && msg.getRoomId() == user.roomId) {
+                                Msg obj = new Msg(userName, "RoomChat", msg.getData());
+                                obj.setRoomId(msg.getRoomId());
+                                user.WriteOne(obj);
+                            }
+						}
+						
+					}
+					
 					else if(msg.getCode().equals("CreateRoomInfo")) {
 						str = String.format ("[%s]님이 [%s]방을 만들었습니다.", msg.getUserName(), msg.getData());
 						AppendText(str);
@@ -294,16 +309,13 @@ public class NTServer extends JFrame {
 							if(user != this)
 								user.WriteOne(msg);
 						}
-						Msg msg1 = new Msg("server", "EnterRoom", msg.getUserName());
+						Msg msg1 = new Msg(msg.getUserName(), "EnterRoom", msg.getUserName());
 						this.role = msg1.p1;
 						msg1.setRole(this.role);
 						msg1.setRoomId(msg.getRoomId());
 						this.roomId = msg.getRoomId();
 						WriteOne(msg1);
-						
-						Msg msg2 = new Msg("server", "400", "다른 참가자가 들어올 때 까지 잠시만 기다려 주세요...");
-						msg2.setRoomId(msg.getRoomId());
-						WriteOne(msg2);						
+											
 					}
 					
 					else if (msg.getCode().equals("RoomRefresh")) { //방 접속자 목록...
