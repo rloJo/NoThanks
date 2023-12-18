@@ -17,6 +17,4 @@ class helpBtnListener implements ActionListener{
 		help_Dialog = new helpDialog();
 		
 	}
-	
-	
 }

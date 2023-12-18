@@ -19,6 +19,7 @@ import javax.swing.border.MatteBorder;
 
 import common.Msg;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 public class InGamePanel extends JPanel {
 	
@@ -32,10 +33,12 @@ public class InGamePanel extends JPanel {
 	public int role; //p1 p2 p3 p4
 	public int order; // 카드를 뽑는 순서
 	public int status;
+	public int token;
 	
 	private Container container;
 	private CardLayout cardlayout;
 	private LobbyPanel lobbyPanel;
+	public gameDialog gameDialog;
 	public JLabel p1_nameLabel;
 	public JLabel p2_nameLabel;
 	public JLabel p3_nameLabel;
@@ -45,6 +48,14 @@ public class InGamePanel extends JPanel {
 	public JTextArea p3_cardArea;
 	public JTextArea p4_cardArea;
 	public JTextArea chattextArea;
+	public JButton openBtn;
+	
+	public ImageIcon NTqcImg; // 물음표 이미지
+	public ImageIcon NTocImg;  // 카드이미지
+	public ImageIcon[] NTrcImg = new ImageIcon[36];
+	public JLabel card;
+	
+	
 	private static final long serialVersionUID = 1L;
 	
 	public DefaultListModel<String> roomUserModel;
@@ -56,6 +67,7 @@ public class InGamePanel extends JPanel {
 		this.container = container;
 		this.lobbyPanel = lobbypanel;
 		this.userName = userName;
+		this.token = 11;
 		setLayout(null);
 		
 		JPanel p1_panel = new JPanel();
@@ -123,10 +135,13 @@ public class InGamePanel extends JPanel {
 		p4_cardArea.setEditable(false);
 		p4_panel.add(p4_cardArea);
 		
-		JButton openBtn = new JButton("넘기기");
+		openBtn = new JButton("넘기기");
 		openBtn.setFont(new Font("굴림", Font.BOLD | Font.ITALIC, 28));
 		openBtn.setBounds(431, 350, 122, 53);
+		openBtn.setEnabled(false);
+		openBtn.addActionListener(new OpenBtnClick());
 		add(openBtn);
+		
 		
 		JLabel cardLabel = new JLabel("남은 카드 수 :");
 		cardLabel.setFont(new Font("굴림", Font.BOLD, 19));
@@ -150,8 +165,22 @@ public class InGamePanel extends JPanel {
 		chatField.addActionListener(new SendMsgBtnClick());
 		add(chatField);
 		chatField.setColumns(10);
-
+		
+		card = new JLabel("?");
+		card.setHorizontalAlignment(SwingConstants.CENTER);
+		card.setFont(new Font("굴림", Font.BOLD | Font.ITALIC, 49));
+		card.setBounds(431, 186, 122, 136);
+		add(card);
+		imageIconMaker();
 	}
+	
+	public void imageIconMaker() {
+		for(int i=1;i<36;i++) {
+			NTrcImg[i] = new ImageIcon("images\\\\" + i + ".jpg");
+		}		
+	}
+	
+	
 	
 	public void roomUserList() {
         Msg msg = new Msg(lobbyPanel.userName, "RoomRefresh", "userList");
@@ -164,7 +193,7 @@ public class InGamePanel extends JPanel {
 		chattextArea.setCaretPosition(chattextArea.getText().length());
     }
 	
-	// keyboard enter key누르면 서버로 전송 
+	// keyboard enter key누르면 채팅을 서버로 전송 
 	class SendMsgBtnClick implements ActionListener // 내부클래스로 액션 이벤트 처리 클래스
 	{
 		@Override
@@ -180,14 +209,18 @@ public class InGamePanel extends JPanel {
 			}
 		}
 	}
-	@Override
-	protected void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		
-		ImageIcon NTqcImg = new ImageIcon("images\\questionmark_card.jpg");
-		g.drawImage(NTqcImg.getImage(), 0, 0, 400,600,this);
-		
-		ImageIcon NTocImg = new ImageIcon("images\\1.jpg");
-		g.drawImage(NTocImg.getImage(), 0, 0, 400,600,this);
+	
+	// 오픈 버튼을 누르면 오픈했다는 정보를 서버로 보낸다. 
+	class OpenBtnClick implements ActionListener // 내부클래스로 액션 이벤트 처리 클래스
+	{
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			Msg openMsg = new Msg(userName, "CardOpen","["+ userName +"] 카드를 open했습니다.");
+			openMsg.setRoomId(roomId);
+			lobbyPanel.sendObject(openMsg);
+			gameDialog = new gameDialog(lobbyPanel);
+			gameDialog.setVisible(true);
+			
+		}
 	}
 }

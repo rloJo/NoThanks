@@ -34,7 +34,7 @@ public class LobbyPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 	private JFrame mainFrame;
 	private LobbyPanel lobbyPanel;
-	private InGamePanel IngamePanel;
+	public InGamePanel IngamePanel;
 	private Container container;
 	private CardLayout cardLayout;
 	private CreateRoomFrame createRoomFrame;
@@ -223,8 +223,6 @@ public class LobbyPanel extends JPanel {
 		msg.setPassWd(passWd);
 		msg.setMode(roomType);
 		sendObject(msg);
-		/*--아래코드 수정-*/
-		IngamePanel.p1_nameLabel.setText(userName);
 	}
 	
 	//server에 메세지 객체(Msg)를 전송하는 메소드 
@@ -437,6 +435,31 @@ public class LobbyPanel extends JPanel {
                     		IngamePanel.p4_nameLabel.setText(st3.nextToken());
                         }
                     	break;
+                    	
+                    	
+                    case "GameStartMsg":      
+                    	System.out.println("Ingame내의 내 role 은" + IngamePanel.role + " " + msg.getRole());
+                    	IngamePanel.AppendChat(msg.getUserName(),msg.getData());
+                    	
+                    	if(IngamePanel.role == msg.p1)
+                    	{            
+                    		System.out.println("Ingame내의 내 role 은" + IngamePanel.role + " " + msg.p1);
+                    		IngamePanel.openBtn.setEnabled(true);
+                    	}
+                  
+                    	break;
+                    
+                    case "CheckCard":
+                    	System.out.println(msg.getData() + "카드 확인해라");
+                    	IngamePanel.card.setText(msg.getData());
+                    	break;	
+                    	
+                    case "CardOpen":
+                    	System.out.println(msg.getData() + "카드 확인해라");
+                    	break;	
+                    	
+                    	
+                    	
                     	// 게임 방에 접속 할 수 없는 경우
 					case "RoomFull":
 						JOptionPane.showMessageDialog(mainFrame, msg.getData(), "error", JOptionPane.ERROR_MESSAGE);

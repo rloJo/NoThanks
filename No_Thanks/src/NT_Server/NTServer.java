@@ -423,14 +423,122 @@ public class NTServer extends JFrame {
 							
 							findRoom.users.add(userName); // player 리스트에 추가
 						}
-						
 						 
+						 String info = String.format("[%s]님이 [%s]방에 접속하셨습니다.", msg.getUserName(), msg.getData());
+						AppendText(info);
+						 
+						if(findRoom.getUserCount() == 4){ //4명이 차서 게임 시작을 알린다
+							System.out.println("다 참 서버에서 메시지 보냄");
+							Msg obj = new Msg("server", "GameStartMsg", "player1 부터 게임을 시작합니다"); //게임 시작 메시지를 방에 있는 모든 object에게 뿌림
+							for (int i = 0; i < user_vc.size(); i++) {
+								UserService user = (UserService) user_vc.elementAt(i);
+								if(findRoom.getRoomId() == user.roomId) {
+									user.WriteOne(obj);
+								}
+							}
+													
+							findRoom.setStatus(1); //방 상태를 게임 중으로 바꿈							
+							AppendText("[" + roomId + "]방 게임 시작!!");
+							AppendText("현재 [" + roomId + "]방에 있는 플레이어 수 : " + findRoom.users.size());
+						}
+						 			
+						 					 
 					}
 					
-					String info = String.format("[%s]님이 [%s]방에 접속하셨습니다.", msg.getUserName(), msg.getData());
-					AppendText(info);
+					else if (msg.getCode().equals("GameStart")) { //4인이 다 차면 게임이 시작된다...
+						NTRoom gameRoom = null;
+						String data = "게임을 시작합니다 1번 player부터 시작합니다";
+						for(int i=0; i<RoomVector.size(); i++) {
+							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
+							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
+								gameRoom = ntRoom; // 찾은 방 저장
+								break;
+							}
+						}
+																
+						for(int i=0; i<user_vc.size(); i++) {
+							UserService u = (NTServer.UserService) user_vc.get(i);
+							if(u.roomId == msg.getRoomId())
+								u.WriteOne(new Msg("SERVER", "GameStart", data));
+						}
+					}
 					
+					else if (msg.getCode().equals("CardOpen")) { //카드 오픈 버튼을 누르면
+						System.out.println("카드 열었네");
+						NTRoom gameRoom2 = null ;
+						for(int i=0; i<RoomVector.size(); i++) {
+							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
+							System.out.println(msg.getRoomId() + "   " + ntRoom.getRoomId() );
+							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
+								System.out.println("찾았다");
+								System.out.println(msg.getRoomId() + "   " + ntRoom.getRoomId() );
+								gameRoom2 = ntRoom; // 찾은 방 저장
+								break;
+							}
+						}
+						gameRoom2.setIndex();										
+						for(int i=0; i<user_vc.size(); i++) {
+							String openMsg = "[" + msg.getUserName() + "] 님이 카드를 열었습니다.";
+							UserService u = (NTServer.UserService) user_vc.get(i);
+							if(u.roomId == msg.getRoomId())
+							{
+								//u.WriteOne(new Msg("server", "CardOpen", openMsg));
+								u.WriteOne(new Msg("server", "CheckCard", String.format("%d",gameRoom2.getRandCard())));
+							}
+						}						
+					}
 					
+					else if (msg.getCode().equals("Eat")) { //카드 오픈 버튼을 누르면
+						System.out.println(msg.getUserName() + "이 "+ msg.getData() + "카드 먹었네 ");
+						/*NTRoom gameRoom2 = null ;
+						for(int i=0; i<RoomVector.size(); i++) {
+							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
+							System.out.println(msg.getRoomId() + "   " + ntRoom.getRoomId() );
+							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
+								System.out.println("찾았다");
+								System.out.println(msg.getRoomId() + "   " + ntRoom.getRoomId() );
+								gameRoom2 = ntRoom; // 찾은 방 저장
+								break;
+							}
+						}
+						gameRoom2.setIndex();										
+						for(int i=0; i<user_vc.size(); i++) {
+							String openMsg = "[" + msg.getUserName() + "] 님이 카드를 열었습니다.";
+							UserService u = (NTServer.UserService) user_vc.get(i);
+							if(u.roomId == msg.getRoomId())
+							{
+								//u.WriteOne(new Msg("server", "CardOpen", openMsg));
+								u.WriteOne(new Msg("server", "CheckCard", String.format("%d",gameRoom2.getRandCard())));
+							}
+						}*/						
+					}
+					
+					else if (msg.getCode().equals("NoEat")) { //카드 오픈 버튼을 누르면
+						System.out.println("카드 안먹었네");
+						/*NTRoom gameRoom2 = null ;
+						for(int i=0; i<RoomVector.size(); i++) {
+							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
+							System.out.println(msg.getRoomId() + "   " + ntRoom.getRoomId() );
+							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
+								System.out.println("찾았다");
+								System.out.println(msg.getRoomId() + "   " + ntRoom.getRoomId() );
+								gameRoom2 = ntRoom; // 찾은 방 저장
+								break;
+							}
+						}
+						gameRoom2.setIndex();										
+						for(int i=0; i<user_vc.size(); i++) {
+							String openMsg = "[" + msg.getUserName() + "] 님이 카드를 열었습니다.";
+							UserService u = (NTServer.UserService) user_vc.get(i);
+							if(u.roomId == msg.getRoomId())
+							{
+								//u.WriteOne(new Msg("server", "CardOpen", openMsg));
+								u.WriteOne(new Msg("server", "CheckCard", String.format("%d",gameRoom2.getRandCard())));
+							}
+						}	*/					
+					}
+																			
+																										
                 } catch (IOException e) {
                     AppendText("ois.readObject() error");
                     try {

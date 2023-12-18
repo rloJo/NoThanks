@@ -17,6 +17,7 @@ public class NTRoom {
     private String passWd;
     private String roomType;
     private int mode; // 방 모드 변수 0:normal 1:special
+    public int index =0;
 
     public NTRoom(int roomId, String roomName, String roomType, String roomManager, boolean isPass) {
         this.roomId = roomId;
@@ -75,6 +76,12 @@ public class NTRoom {
         return roomName;
     }
 
+    public int getRandCard() {
+    	
+        return cards[index];
+    }
+    
+    
     public int getUserCount() {
         return users.size();
     }
@@ -100,6 +107,10 @@ public class NTRoom {
 	}
     
     //Setter 메소드 추가
+    
+    public void setIndex() {
+    	index++;
+    }
     public void setRoomId(int RoomId) {
 		this.roomId = roomId;
 	}
