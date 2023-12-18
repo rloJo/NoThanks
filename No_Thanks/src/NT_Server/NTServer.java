@@ -464,78 +464,79 @@ public class NTServer extends JFrame {
 					}
 					
 					else if (msg.getCode().equals("CardOpen")) { //카드 오픈 버튼을 누르면
-						System.out.println("카드 열었네");
 						NTRoom gameRoom2 = null ;
 						for(int i=0; i<RoomVector.size(); i++) {
 							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
-							System.out.println(msg.getRoomId() + "   " + ntRoom.getRoomId() );
 							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
-								System.out.println("찾았다");
-								System.out.println(msg.getRoomId() + "   " + ntRoom.getRoomId() );
 								gameRoom2 = ntRoom; // 찾은 방 저장
 								break;
 							}
 						}
-						gameRoom2.setIndex();										
+						gameRoom2.setIndex();				
+						gameRoom2.total--;
+						String openStr = "[" + msg.getUserName() + "] 님이 카드를 열었습니다.";
+						Msg openMsg = new Msg("server", "CheckCard",openStr);
+						openMsg.setRole(msg.getRole());
+						openMsg.setToken(gameRoom2.total);
+						openMsg.setCard(gameRoom2.getRandCard());
 						for(int i=0; i<user_vc.size(); i++) {
-							String openMsg = "[" + msg.getUserName() + "] 님이 카드를 열었습니다.";
+							
 							UserService u = (NTServer.UserService) user_vc.get(i);
 							if(u.roomId == msg.getRoomId())
 							{
-								//u.WriteOne(new Msg("server", "CardOpen", openMsg));
-								u.WriteOne(new Msg("server", "CheckCard", String.format("%d",gameRoom2.getRandCard())));
+								u.WriteOne(openMsg);
 							}
 						}						
 					}
 					
 					else if (msg.getCode().equals("Eat")) { //카드 오픈 버튼을 누르면
-						System.out.println(msg.getUserName() + "이 "+ msg.getData() + "카드 먹었네 ");
-						/*NTRoom gameRoom2 = null ;
+						NTRoom gameRoom2 = null ;
 						for(int i=0; i<RoomVector.size(); i++) {
 							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
-							System.out.println(msg.getRoomId() + "   " + ntRoom.getRoomId() );
 							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
-								System.out.println("찾았다");
-								System.out.println(msg.getRoomId() + "   " + ntRoom.getRoomId() );
 								gameRoom2 = ntRoom; // 찾은 방 저장
 								break;
 							}
 						}
-						gameRoom2.setIndex();										
+									
+						String EatStr = "[" + msg.getUserName() + "] 님이 카드를 먹었습니다.";
+						Msg Eatmsg = new Msg("server","Eat",EatStr);
+						Eatmsg.setCard(msg.getCard());
+						Eatmsg.setRole(msg.getRole());
+						
 						for(int i=0; i<user_vc.size(); i++) {
-							String openMsg = "[" + msg.getUserName() + "] 님이 카드를 열었습니다.";
 							UserService u = (NTServer.UserService) user_vc.get(i);
 							if(u.roomId == msg.getRoomId())
 							{
-								//u.WriteOne(new Msg("server", "CardOpen", openMsg));
-								u.WriteOne(new Msg("server", "CheckCard", String.format("%d",gameRoom2.getRandCard())));
+								u.WriteOne(Eatmsg);
 							}
-						}*/						
+						}						
 					}
 					
 					else if (msg.getCode().equals("NoEat")) { //카드 오픈 버튼을 누르면
 						System.out.println("카드 안먹었네");
-						/*NTRoom gameRoom2 = null ;
+						NTRoom gameRoom2 = null ;
 						for(int i=0; i<RoomVector.size(); i++) {
 							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
-							System.out.println(msg.getRoomId() + "   " + ntRoom.getRoomId() );
 							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
-								System.out.println("찾았다");
-								System.out.println(msg.getRoomId() + "   " + ntRoom.getRoomId() );
 								gameRoom2 = ntRoom; // 찾은 방 저장
 								break;
 							}
-						}
-						gameRoom2.setIndex();										
+						}				
+						
+						String noEatStr = "[" + msg.getUserName() + "] 님이 토큰을 지불하고 턴을 넘겼습니다.";
+						Msg noEatMsg = new Msg("server","NoEat" ,noEatStr);
+						noEatMsg.setRole(msg.getRole());
+						noEatMsg.setToken(msg.getToken());
+						
 						for(int i=0; i<user_vc.size(); i++) {
-							String openMsg = "[" + msg.getUserName() + "] 님이 카드를 열었습니다.";
+											
 							UserService u = (NTServer.UserService) user_vc.get(i);
 							if(u.roomId == msg.getRoomId())
-							{
-								//u.WriteOne(new Msg("server", "CardOpen", openMsg));
-								u.WriteOne(new Msg("server", "CheckCard", String.format("%d",gameRoom2.getRandCard())));
+							{									
+								u.WriteOne(noEatMsg);
 							}
-						}	*/					
+						}				
 					}
 																			
 																										

@@ -4,22 +4,22 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.swing.DefaultListModel;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.border.MatteBorder;
 
 import common.Msg;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 
 public class InGamePanel extends JPanel {
 	
@@ -34,6 +34,13 @@ public class InGamePanel extends JPanel {
 	public int order; // 카드를 뽑는 순서
 	public int status;
 	public int token;
+	public int token_stack = 0;
+	public int[] cards;
+	public ArrayList<Integer> p1_cardList = new ArrayList<>();
+	public ArrayList<Integer> p2_cardList = new ArrayList<>();
+	public ArrayList<Integer> p3_cardList = new ArrayList<>();
+	public ArrayList<Integer> p4_cardList = new ArrayList<>();
+	
 	
 	private Container container;
 	private CardLayout cardlayout;
@@ -43,6 +50,7 @@ public class InGamePanel extends JPanel {
 	public JLabel p2_nameLabel;
 	public JLabel p3_nameLabel;
 	public JLabel p4_nameLabel;
+	public JLabel cardLabel;
 	public JTextArea p1_cardArea;
 	public JTextArea p2_cardArea;
 	public JTextArea p3_cardArea;
@@ -50,9 +58,6 @@ public class InGamePanel extends JPanel {
 	public JTextArea chattextArea;
 	public JButton openBtn;
 	
-	public ImageIcon NTqcImg; // 물음표 이미지
-	public ImageIcon NTocImg;  // 카드이미지
-	public ImageIcon[] NTrcImg = new ImageIcon[36];
 	public JLabel card;
 	
 	
@@ -68,6 +73,7 @@ public class InGamePanel extends JPanel {
 		this.lobbyPanel = lobbypanel;
 		this.userName = userName;
 		this.token = 11;
+		cards = new int[36];
 		setLayout(null);
 		
 		JPanel p1_panel = new JPanel();
@@ -143,7 +149,7 @@ public class InGamePanel extends JPanel {
 		add(openBtn);
 		
 		
-		JLabel cardLabel = new JLabel("남은 카드 수 :");
+		cardLabel = new JLabel("남은 카드 수 :");
 		cardLabel.setFont(new Font("굴림", Font.BOLD, 19));
 		cardLabel.setBounds(431, 133, 179, 34);
 		add(cardLabel);
@@ -171,13 +177,6 @@ public class InGamePanel extends JPanel {
 		card.setFont(new Font("굴림", Font.BOLD | Font.ITALIC, 49));
 		card.setBounds(431, 186, 122, 136);
 		add(card);
-		imageIconMaker();
-	}
-	
-	public void imageIconMaker() {
-		for(int i=1;i<36;i++) {
-			NTrcImg[i] = new ImageIcon("images\\\\" + i + ".jpg");
-		}		
 	}
 	
 	
@@ -210,6 +209,54 @@ public class InGamePanel extends JPanel {
 		}
 	}
 	
+	public void setCard() {
+		String str = "";
+		Collections.sort(p1_cardList);
+		Collections.sort(p2_cardList);
+		Collections.sort(p3_cardList);
+		Collections.sort(p4_cardList);
+		
+		for(int i=0; i<p1_cardList.size();i++)
+		{
+			str += Integer.toString(p1_cardList.get(i)) + " ";
+			if(i%6 == 5)
+			{
+				str += "\n";
+			}
+		}
+		p1_cardArea.setText(str);
+		str = "";
+		for(int i=0; i<p2_cardList.size();i++)
+		{
+			str += Integer.toString(p2_cardList.get(i)) + " ";
+			if(i%6 == 5)
+			{
+				str += "\n";
+			}
+		}
+		p2_cardArea.setText(str);
+		str = "";
+		for(int i=0; i<p3_cardList.size();i++)
+		{
+			str += Integer.toString(p3_cardList.get(i)) + " ";
+			if(i%6 == 5)
+			{
+				str += "\n";
+			}
+		}
+		p3_cardArea.setText(str);
+		str = "";
+		for(int i=0; i<p4_cardList.size();i++)
+		{
+			str += Integer.toString(p4_cardList.get(i)) + " ";
+			if(i%6 == 5)
+			{
+				str += "\n";
+			}
+		}
+		p4_cardArea.setText(str);		
+	}
+	
 	// 오픈 버튼을 누르면 오픈했다는 정보를 서버로 보낸다. 
 	class OpenBtnClick implements ActionListener // 내부클래스로 액션 이벤트 처리 클래스
 	{
@@ -217,9 +264,8 @@ public class InGamePanel extends JPanel {
 		public void actionPerformed(ActionEvent e) {
 			Msg openMsg = new Msg(userName, "CardOpen","["+ userName +"] 카드를 open했습니다.");
 			openMsg.setRoomId(roomId);
+			openMsg.setRole(role);
 			lobbyPanel.sendObject(openMsg);
-			gameDialog = new gameDialog(lobbyPanel);
-			gameDialog.setVisible(true);
 			
 		}
 	}

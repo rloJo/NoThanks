@@ -32,7 +32,8 @@ public class gameDialog extends JDialog {
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
 		contentPanel.setLayout(null);
 		{
-			DialogLabel = new JLabel("<html>당신의 남은 토큰 : " + 
+			DialogLabel = new JLabel("<html> 현재까지 쌓인 토큰" + lobbyPanel.IngamePanel.token_stack + "<br>"+ 
+										lobbyPanel.userName + "님의 남은 토큰 : " + 
 										Integer.toString(lobbyPanel.IngamePanel.token) + 
 										"<br>" +
 										lobbyPanel.IngamePanel.card.getText() + "를 가져 가겠습니까?</html>"
@@ -46,17 +47,20 @@ public class gameDialog extends JDialog {
 			buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
 			getContentPane().add(buttonPane, BorderLayout.SOUTH);
 			{
-				JButton okButton = new JButton("\uBA39\uB294\uB2E4");
+				JButton okButton = new JButton("먹는다");
 				okButton.setActionCommand("OK");
 				buttonPane.add(okButton);
 				okButton.addActionListener(new OkBtnAction());
 				getRootPane().setDefaultButton(okButton);
 			}
 			{
-				JButton cancelButton = new JButton("\uC548\uBA39\uB294\uB2E4");
+				
+				JButton cancelButton = new JButton("안먹는다");
 				cancelButton.setActionCommand("Cancel");
 				cancelButton.addActionListener(new CancelBtnAction());
 				buttonPane.add(cancelButton);
+				if(lobbyPanel.IngamePanel.token == 0)
+					cancelButton.setEnabled(false);
 			}
 		}
 	}
@@ -66,6 +70,9 @@ public class gameDialog extends JDialog {
 		public void actionPerformed(ActionEvent e) {
 			String userName = lobbyPanel.userName;
 			Msg msg = new Msg(userName, "Eat", lobbyPanel.IngamePanel.card.getText());
+			msg.setCard(Integer.parseInt(lobbyPanel.IngamePanel.card.getText()));
+			msg.setRoomId(lobbyPanel.roomId);
+			msg.setRole(lobbyPanel.IngamePanel.role);
 			lobbyPanel.sendObject(msg);
 			dispose();
 		}
@@ -76,6 +83,9 @@ public class gameDialog extends JDialog {
 		public void actionPerformed(ActionEvent e) {
 			String userName = lobbyPanel.userName;
 			Msg msg = new Msg(userName, "NoEat", lobbyPanel.IngamePanel.card.getText());
+			msg.upToken();
+			msg.setRoomId(lobbyPanel.roomId);
+			msg.setRole(lobbyPanel.IngamePanel.role);
 			lobbyPanel.sendObject(msg);
 			dispose();
 		}

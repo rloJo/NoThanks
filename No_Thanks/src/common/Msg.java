@@ -16,7 +16,8 @@ public class Msg implements Serializable{
 	private int status = 0 ;
 	private int mode;
 	private int role = 0;
-	
+	private int card;
+	private int token =0;
 	private String code;
 	private String userName;
 	private String data;
@@ -51,6 +52,10 @@ public class Msg implements Serializable{
 		return userCount;
 	}
 	
+	public int getCard() {
+        return card;
+    }
+	
 	public String getCode() {
 		return code;
 	}
@@ -68,6 +73,10 @@ public class Msg implements Serializable{
 	
 	public int getRole() {
 		return role;
+	}
+	
+	public int getToken() {
+		return token;
 	}
 	
 	//Setter 메서드 추가
@@ -113,6 +122,18 @@ public class Msg implements Serializable{
 	
 	public void setStatus(int status) {
 		this.status = status;
+	}
+	
+	public void setCard(int card) {
+        this.card = card;
+    }
+	
+	public void upToken() {
+		this.token++;
+	}
+	
+	public void setToken(int token) {
+		this.token += token;
 	}
 	
 }

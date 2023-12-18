@@ -1,12 +1,14 @@
 package NT_Server;
 
+import java.awt.EventQueue;
 import java.util.Random;
 import java.util.Vector;
 
 public class NTRoom {
-	final int special_Size = 30; // 각 모드에 따른 카드 수
-	final int normal_Size = 32;
+	public final int special_Size = 31; // 각 모드에 따른 카드 수
+	public final int normal_Size = 33;
 	
+	public int total;
     private int roomId = 0; // 각 방 객체의 고유한 번호
     private String roomName;
     public Vector<String> users = new Vector<>();
@@ -25,6 +27,7 @@ public class NTRoom {
         this.users.add(roomManager);
         this.isPass = isPass; //비밀 번호 설정
         this.mode = (roomType == "normal") ? 0 : 1;
+        this.total = (mode == 0) ? normal_Size : special_Size; 
         this.userCount = users.size();
         set_cards(this.mode); // 초기 카드 배열을 mode에 따라 설정
     }
@@ -69,8 +72,7 @@ public class NTRoom {
     		array[i] = temp;
     	}
     }
-    
-    
+     
     // Getter 메서드 추가
     public String getRoomName() {
         return roomName;

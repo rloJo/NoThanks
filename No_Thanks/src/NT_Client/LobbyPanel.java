@@ -56,7 +56,7 @@ public class LobbyPanel extends JPanel {
 	private static final int BUF_LEN = 128;
 	
 	public String userName;
-	private int roomId;
+	public int roomId;
 	private Socket socket;
     private ObjectInputStream ois;
 	private ObjectOutputStream oos;
@@ -438,25 +438,72 @@ public class LobbyPanel extends JPanel {
                     	
                     	
                     case "GameStartMsg":      
-                    	System.out.println("Ingame내의 내 role 은" + IngamePanel.role + " " + msg.getRole());
                     	IngamePanel.AppendChat(msg.getUserName(),msg.getData());
                     	
                     	if(IngamePanel.role == msg.p1)
                     	{            
-                    		System.out.println("Ingame내의 내 role 은" + IngamePanel.role + " " + msg.p1);
                     		IngamePanel.openBtn.setEnabled(true);
                     	}
                   
                     	break;
                     
                     case "CheckCard":
-                    	System.out.println(msg.getData() + "카드 확인해라");
-                    	IngamePanel.card.setText(msg.getData());
+                    	String label = "남은 카드 수 : " + msg.getToken();
+                    	IngamePanel.card.setText(Integer.toString(msg.getCard()));
+                    	IngamePanel.cardLabel.setText(label);
+                    	if(msg.getRole() == IngamePanel.role)
+                    	{                 
+                    		IngamePanel.gameDialog = new gameDialog(lobbyPanel);
+                    		IngamePanel.gameDialog.setVisible(true);
+                    	}
                     	break;	
+                    	               
+                    case "Eat" :               
+                    	IngamePanel.AppendChat(msg.getUserName(),msg.getData());
+                    	if(msg.getRole() == IngamePanel.role)
+                    	{
+                    		IngamePanel.openBtn.setEnabled(true);
+                    		IngamePanel.gameDialog = null;
+                    		IngamePanel.token += IngamePanel.token_stack;                   		
+                    	}
+                    	IngamePanel.token_stack = 0;
+                    	switch(msg.getRole())
+                    	{
+                    		case 1 :
+                    			IngamePanel.p1_cardList.add(msg.getCard());                   			          
+                    			break;                   			                   			
+                    		case 2 :
+                    			IngamePanel.p2_cardList.add(msg.getCard());                  			
+                    			break;                 			
+                    		case 3 :
+                    			IngamePanel.p3_cardList.add(msg.getCard());                    			
+                    			break;                   			
+                    		case 4 :
+                    			IngamePanel.p4_cardList.add(msg.getCard());                 
+                    			break;         	                                	             
+                    	}
+                    	IngamePanel.setCard();
+                    	break;
+                    
+                    case "NoEat" : 
+                    	IngamePanel.AppendChat(msg.getUserName(),msg.getData());
+                    	IngamePanel.token_stack += msg.getToken();
+                    	System.out.println("현재까지 쌓인 토큰 " + msg.getToken());
+                    	if(msg.getRole() == IngamePanel.role)
+                    	{
+                    		IngamePanel.token--;
+                    		IngamePanel.openBtn.setEnabled(false);
+                    	}
                     	
-                    case "CardOpen":
-                    	System.out.println(msg.getData() + "카드 확인해라");
-                    	break;	
+                    	if(IngamePanel.role == (msg.getRole()%4+1))
+                    	{
+                    		IngamePanel.gameDialog = new gameDialog(lobbyPanel);
+                    		IngamePanel.gameDialog.setVisible(true);
+                    	}
+                    	
+                    	break;
+                    	
+                    	
                     	
                     	
                     	

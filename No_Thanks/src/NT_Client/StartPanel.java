@@ -97,7 +97,7 @@ public class StartPanel extends JPanel {
 		public void actionPerformed(ActionEvent e) {
 			String userName = nameTextField.getText().trim();
 			if(userName.equals("")) { // 이름 미입력 시
-				userName = "default user";
+				userName = "default_user";
 			}
 		
 			String ip_addr = iptextField.getText().trim();
