@@ -421,7 +421,6 @@ public class LobbyPanel extends JPanel {
                     	break;
                     	
                     case "RoomRefresh" :
-                    	//IngamePanel.roomUserModel.removeAllElements();
                         String allUser = msg.getData();
                         StringTokenizer st2 = new StringTokenizer(allUser);
                         StringTokenizer st3 = new StringTokenizer(allUser);
@@ -628,9 +627,9 @@ public class LobbyPanel extends JPanel {
                     } catch (Exception ee) {
                         break;
                     }
-                } //c
-            }//w
-        }//r
+                } 
+            }
+        }
     }
 }
   
