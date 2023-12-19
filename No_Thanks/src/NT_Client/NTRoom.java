@@ -2,14 +2,13 @@ package NT_Client;
 
 import java.util.Vector;
 
+//클라이언트에서 게임 방을 관리하기 위한 클래스
 public class NTRoom {
-	private int roomId;
-	private String roomName;
-	private int mode ; // 0 normal  1 special
-	private int userCount = 0;
-	private int status = 0;
-	private boolean isPass = false;
-	private String passWd;
+	private int roomId; //방 번호
+	private String roomName; // 방 제목
+	private int mode ; // 방 모드 0 normal  1 special
+	private int userCount = 0; // 방에 유저 수
+	private int status = 0; // 방 상태 0 대기중 1 게임중 
 	
 	public Vector<LobbyPanel> users = new Vector<>();
 	
@@ -37,14 +36,7 @@ public class NTRoom {
 	public int getStatus() {
 		return this.status;
 	}
-	
-	public boolean getIsPass() {
-		return this.isPass;
-	}
-	
-	public String getPassWd() {
-		return this.passWd;
-	}
+
 	
 	public int getUsers() {
 		return this.users.size();
@@ -61,10 +53,6 @@ public class NTRoom {
 			
 	public void setUserCount(int userCount) {
 		this.userCount = userCount;
-	}
-		
-	public void setIsPass(boolean isPass) {
-		this.isPass = isPass;
 	}
 	
 	public void setUserCount () {

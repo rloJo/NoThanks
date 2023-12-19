@@ -13,6 +13,8 @@ import java.awt.Toolkit;
 import java.awt.Color;
 import java.awt.Font;
 
+//게임 설명이 나오는 다이얼로그 
+// 도움말 버튼을 누르면 나오는 다이얼로그
 public class helpDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;

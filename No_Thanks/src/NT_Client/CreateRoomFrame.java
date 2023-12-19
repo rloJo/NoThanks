@@ -21,6 +21,8 @@ import javax.swing.JRadioButton;
 import java.awt.Color;
 import javax.swing.JButton;
 
+// 방 생성 버튼을 누르면 나오는 다이얼로그 
+// 이 다이얼 로그에서 방 정보를 사용자로 부터 입력 받는다
 public class CreateRoomFrame extends JFrame {
 
 	private LobbyPanel lobbyPanel;
@@ -81,7 +83,7 @@ public class CreateRoomFrame extends JFrame {
 	}
 	
 	//생성 버튼 클릭시 실행되는 이벤트 객체
-	// 방 이름과 비밀번호 여부 및 모드(노말, 스페셜) 정보를 넘긴다.
+	// 방 이름 및 모드(노말, 스페셜) 정보를 넘긴다.
 	class CreateBtnClick implements ActionListener{
 		public void actionPerformed(ActionEvent e) {
 			String roomName = roomNameField.getText();

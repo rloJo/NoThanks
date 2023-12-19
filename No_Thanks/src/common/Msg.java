@@ -3,6 +3,7 @@ package common;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+//서버와 클라이언트가 Msg객체를 통해 서로 통신한다
 public class Msg implements Serializable{
 	public final int p1 = 1;
 	public final int p2 = 2;

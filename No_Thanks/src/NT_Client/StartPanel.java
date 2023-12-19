@@ -18,6 +18,7 @@ import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+//유저이름 창이 나오는 panel 유저 이름을 받고 서버에 연결을 요청한다
 public class StartPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
@@ -70,42 +71,43 @@ public class StartPanel extends JPanel {
 		add(nickLabel);
 		
 		JLabel lblIpAddress = new JLabel("IP Address");
-		lblIpAddress.setBounds(261, 192, 82, 33);
+		lblIpAddress.setBounds(363, 192, 82, 33);
 		add(lblIpAddress);
 		
 		iptextField = new JTextField();
 		iptextField.setText("127.0.0.1");
 		iptextField.setHorizontalAlignment(SwingConstants.CENTER);
 		iptextField.setColumns(10);
-		iptextField.setBounds(382, 198, 116, 33);
+		iptextField.setBounds(457, 192, 116, 33);
 		add(iptextField);
 		
 		JLabel lblPortNumber = new JLabel("Port Number");
-		lblPortNumber.setBounds(261, 261, 82, 33);
+		lblPortNumber.setBounds(363, 261, 82, 33);
 		add(lblPortNumber);
 		
 		porttextField = new JTextField();
 		porttextField.setText("30000");
 		porttextField.setHorizontalAlignment(SwingConstants.CENTER);
 		porttextField.setColumns(10);
-		porttextField.setBounds(382, 261, 116, 33);
+		porttextField.setBounds(457, 261, 116, 33);
 		add(porttextField);
 	}
 	
+	//시작 하기 버튼을 누르면 작동하는 ActionListener 
 	class StartBtnAction implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			String userName = nameTextField.getText().trim();
-			if(userName.equals("")) { // 이름 미입력 시
-				userName = "default_user";
+			if(userName.equals("")) { //이름칸이 공백이면
+				userName = "default_user"; //닉네임 자동생성
 			}
 		
 			String ip_addr = iptextField.getText().trim();
 			String port_no = porttextField.getText().trim();
 			
 			lobbypanel = new LobbyPanel(container, mainFrame, userName, ip_addr, port_no);
-			container.add(lobbypanel, "lobbypanel");
-			cardLayout.show(container, "lobbypanel"); // 대기실 Panel로 변경
+			container.add(lobbypanel, "lobbypanel"); 
+			cardLayout.show(container, "lobbypanel"); //로비 패널을 보여준다 
 		}
 	}
 	

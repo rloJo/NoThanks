@@ -1,6 +1,7 @@
 package NT_Client;
 
 import java.awt.CardLayout;
+
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Font;
@@ -20,22 +21,23 @@ import javax.swing.SwingConstants;
 import javax.swing.border.MatteBorder;
 
 import common.Msg;
-
+// 실제 게임이 이루어지는 panel이다 
 public class InGamePanel extends JPanel {
-	
+	/// 역할이 정해져있음
 	public final int p1 = 0;
 	public final int p2 = 1;
 	public final int p3 = 2;
 	public final int p4 = 3;
 	
 	public String userName;
-	public int roomId;
+	public int roomId; //방번호
 	public int role; //p1 p2 p3 p4
-	public int order; // 카드를 뽑는 순서
+	public int order;
 	public int status;
-	public int token;
-	public int token_stack = 0;
+	public int token; 
+	public int token_stack = 0; //카드를 안먹으면 토큰이 쌓이는 것을 저장하기 위한 변수
 	public int[] cards;
+	//각 플레이어의 카드를 저장하는 리스트 변수
 	public ArrayList<Integer> p1_cardList = new ArrayList<>();
 	public ArrayList<Integer> p2_cardList = new ArrayList<>();
 	public ArrayList<Integer> p3_cardList = new ArrayList<>();
@@ -181,8 +183,7 @@ public class InGamePanel extends JPanel {
 		
 	}
 	
-	
-	
+	//사용자가 입장하면 각 닉네임이 들어가는 라벨에 닉네임을 보여주기위해 RoomRefresh를 서버에 전송
 	public void roomUserList() {
         Msg msg = new Msg(lobbyPanel.userName, "RoomRefresh", "userList");
         msg.setRoomId(this.roomId);
@@ -199,18 +200,19 @@ public class InGamePanel extends JPanel {
 	{
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			// Send button을 누르거나 메시지 입력하고 Enter key 치면
+			//메시지 입력하고 Enter key 치면 작동한다
 			if (e.getSource() == chatField) {
 				String msg = null;
                 msg = chatField.getText();
-                AppendChat(userName, msg); // 채팅창 우측에 메시지 출력
-                lobbyPanel.sendChatMessage(msg); // 메시지 전송
+                AppendChat(userName, msg); 
+                lobbyPanel.sendChatMessage(msg); 
                 chatField.setText(""); // 입력창 초기화
                 chatField.requestFocus(); // 포커스 주기
 			}
 		}
 	}
 	
+	// 다른 user가 카드를 먹으면 card 정보를 받아 정렬해 cardArea에 먹은 카드의 정보를 보여준다
 	public void setCard() {
 		String str = "";
 		Collections.sort(p1_cardList);

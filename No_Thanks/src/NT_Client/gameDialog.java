@@ -14,6 +14,8 @@ import javax.swing.border.EmptyBorder;
 
 import common.Msg;
 
+//게임 실행에 필요한 다이얼로그 
+//서버에게 자신이 카드를 먹을 것인지 토큰을 지불하고 안먹을 것인지 보여주는 다이얼로그
 public class gameDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
@@ -21,9 +23,6 @@ public class gameDialog extends JDialog {
 	public JLabel DialogLabel;
 	LobbyPanel lobbyPanel;
 	
-	/**
-	 * Create the dialog.
-	 */
 	public gameDialog(LobbyPanel lobbyPanel) {
 		this.lobbyPanel = lobbyPanel;
 		setBounds(100, 100, 472, 334);
@@ -65,6 +64,7 @@ public class gameDialog extends JDialog {
 		}
 	}
 	
+	// 먹는다는 버튼을 누르면 Eat 태그로 서버에 정보를 전달한다
 	class OkBtnAction implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -78,6 +78,7 @@ public class gameDialog extends JDialog {
 		}
 	}
 	
+	//안먹는다는 버튼을 누르면 NoEat 태그로 서버에게 정보를 전달한다
 	class CancelBtnAction implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent e) {
