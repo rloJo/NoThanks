@@ -1,6 +1,7 @@
 package common;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 public class Msg implements Serializable{
 	public final int p1 = 1;
@@ -8,10 +9,10 @@ public class Msg implements Serializable{
 	public final int p3 = 3;
 	public final int p4 = 4;
 	
+	public ArrayList<Integer> p_cards = new ArrayList<Integer>();
+	
 	private int roomId;
 	private String roomName;
-	private String passWd;
-	private boolean isPass;
 	private int userCount;
 	private int status = 0 ;
 	private int mode;
@@ -34,14 +35,6 @@ public class Msg implements Serializable{
 	}
 	public int getRoomId() {
 		return roomId;
-	}
-	
-	public boolean getIsPass() {
-		return isPass;
-	}
-	
-	public String getPassWd() {
-		return passWd;
 	}
 	
 	public String getUserName() {
@@ -86,14 +79,6 @@ public class Msg implements Serializable{
 	
 	public void setRoomId(int roomId) {
 		this.roomId = roomId;
-	}
-	
-	public void setIsPass(boolean isPass) {
-		this.isPass = isPass;
-	}
-	
-	public void setPassWd(String passwd) {
-		this.passWd = passWd ;
 	}
 	
 	public void setUserName(String userName) {

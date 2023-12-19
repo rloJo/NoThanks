@@ -27,8 +27,6 @@ public class CreateRoomFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
 	private JTextField roomNameField;
-	private JCheckBox passwdCheckBox;
-	private JPasswordField passwdField;
 	private JRadioButton normalBtn;
 	private JRadioButton specialBtn;
 	
@@ -56,41 +54,17 @@ public class CreateRoomFrame extends JFrame {
 		contentPane.add(roomNameField);
 		roomNameField.setColumns(10);
 		
-		passwdField = new JPasswordField();
-		passwdField.setBounds(187, 199, 160, 40);
-		contentPane.add(passwdField);
-		
-		JLabel roomNameLabel_1 = new JLabel("비밀번호");
-		roomNameLabel_1.setFont(new Font("굴림", Font.BOLD, 19));
-		roomNameLabel_1.setBounds(368, 199, 90, 40);
-		contentPane.add(roomNameLabel_1);
-		
-		passwdCheckBox = new JCheckBox("");
-		passwdCheckBox.setBackground(new Color(255, 255, 255));
-		passwdCheckBox.setBounds(456, 207, 26, 23);
-		contentPane.add(passwdCheckBox);
-		passwdCheckBox.setSelected(false); // 처음에 공개방 설정
-		passwdCheckBox.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if(e.getStateChange() == ItemEvent.SELECTED)
-					passwdField.setEnabled(true);
-				else
-					passwdField.setEnabled(false);
-			}
-		});
-		
 		normalBtn = new JRadioButton("일반 모드");
 		normalBtn.setBackground(new Color(255, 255, 255));
 		normalBtn.setFont(new Font("굴림", Font.PLAIN, 15));
-		normalBtn.setBounds(187, 297, 119, 23);
+		normalBtn.setBounds(155, 230, 119, 23);
 		contentPane.add(normalBtn);
 		normalBtn.setSelected(true);
 		
 		specialBtn = new JRadioButton("특별 모드");
 		specialBtn.setBackground(new Color(255, 255, 255));
 		specialBtn.setFont(new Font("굴림", Font.PLAIN, 15));
-		specialBtn.setBounds(324, 297, 119, 23);
+		specialBtn.setBounds(342, 230, 119, 23);
 		contentPane.add(specialBtn);
 		
 		ButtonGroup groupRd = new ButtonGroup();
@@ -99,7 +73,7 @@ public class CreateRoomFrame extends JFrame {
 		
 		JButton CreateBtn = new JButton("\uC0DD\uC131");
 		CreateBtn.setFont(new Font("굴림", Font.PLAIN, 17));
-		CreateBtn.setBounds(211, 347, 112, 34);
+		CreateBtn.setBounds(221, 305, 112, 34);
 		contentPane.add(CreateBtn);
 		
 		CreateBtn.addActionListener(new CreateBtnClick());
@@ -111,15 +85,9 @@ public class CreateRoomFrame extends JFrame {
 	class CreateBtnClick implements ActionListener{
 		public void actionPerformed(ActionEvent e) {
 			String roomName = roomNameField.getText();
-	        boolean isPass = passwdCheckBox.isSelected();
-	        String passWd = null;
-	        if(isPass)
-	        {
-	        	passWd = new String(passwdField.getPassword());
-	        }
-	        
+	      
 	        int roomType = (normalBtn.isSelected()) ? 0 : 1;
-	        lobbyPanel.createRoom(roomName,isPass,passWd,roomType);
+	        lobbyPanel.createRoom(roomName,roomType);
 	        dispose();
 		}
 	}

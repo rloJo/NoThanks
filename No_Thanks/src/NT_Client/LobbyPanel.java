@@ -179,16 +179,8 @@ public class LobbyPanel extends JPanel {
                 	return;
                 
                 NTRoom selectedRoom = ntRooms.get(selectedIndex);            
-                String passWd = null ;
-                if(selectedRoom.getIsPass()) {
-                	System.out.println("비번방");
-                	
-                	
-                }
                 Msg msg = new Msg(userName,"EnterRoom","방 접속");
-                msg.setRoomId(selectedRoom.getRoomId());
-                msg.setPassWd(selectedRoom.getPassWd());
-                System.out.println("selected roomId = " + selectedRoom.getRoomId());
+                msg.setRoomId(ntRooms.get(selectedIndex).getRoomId());
                 sendObject(msg);	
                 
             }
@@ -222,7 +214,7 @@ public class LobbyPanel extends JPanel {
 	}
 	
 	//CreateRoomFrame에서 방 만들기 버튼을 누르면 실행되는 함수
-	public void createRoom(String roomName, Boolean isPass, String passWd, int roomType)
+	public void createRoom(String roomName,int roomType)
 	{
 		IngamePanel = new InGamePanel(container, lobbyPanel, this.userName);
 		container.add(IngamePanel,"IngamePanel");
@@ -231,8 +223,6 @@ public class LobbyPanel extends JPanel {
 		Msg msg = new Msg(userName,"CreateRoomInfo","방 생성");
 		msg.setUserName(userName);
 		msg.setRoomName(roomName);
-		msg.setIsPass(isPass);
-		msg.setPassWd(passWd);
 		msg.setMode(roomType);
 		sendObject(msg);
 	}
@@ -354,6 +344,9 @@ public class LobbyPanel extends JPanel {
                     
                     switch (msg.getCode())
                     {
+                    
+                    case "logout" :
+                    	
                     case "AllChat":
                     	String chat = msg.getData();
                     	AppendText(chat +"\n");
@@ -361,11 +354,9 @@ public class LobbyPanel extends JPanel {
                     
                     
                     case "CreateRoomInfo":
-                    //case "roomlist":
                     	int roomId = msg.getRoomId();
                     	String roomName = msg.getRoomName();
                     	int userCount = msg.getUserCount();
-                    	boolean IsPass = msg.getIsPass();
                     	String gameMode = (msg.getMode() == 0) ? "normal" : "special"; 
                     	String status = (msg.getStatus() == 0) ? "대기 중" : "게임 중"; 
                     	
@@ -388,12 +379,10 @@ public class LobbyPanel extends JPanel {
                     			,msg.getMode() == 0 ? "normal" : "special"
                     			,status);
                     	roomModel.addElement(roomInfo);
-                    	System.out.println(roomlist.getModel());
                     	break;
                     
                     case "EnterRoom":
                     	lobbyPanel.roomId = msg.getRoomId();
-                    	System.out.println(msg.getRoomId());
                     	for(int i=0; i<ntRooms.size();i++)
                     	{
                     		NTRoom room = ntRooms.get(i);
@@ -547,7 +536,6 @@ public class LobbyPanel extends JPanel {
 						newRoom2.setRoomName(roomName2);
 						newRoom2.setUserCount(peopleCount2);
 						newRoom2.setStatus(msg.getStatus());
-						newRoom2.setIsPass(msg.getIsPass());
 						ntRooms.add(newRoom2); // 방 리스트에 추가
 						
 						if(newRoom2.getUserCount() == 4) 
@@ -571,23 +559,16 @@ public class LobbyPanel extends JPanel {
                     			,msg.getUserCount()
                     			,msg.getMode() == 0 ? "normal" : "special"
                     			,s);
-						System.out.println("최신화하여 생성한 roomModel의 값:" + roomStr2);
 			
 						int RLindex = 0;
 						for (int i = 0; i < roomModel.getSize(); i++) {
 						    String currentString = roomModel.getElementAt(i);
-						    //char secondChar = currentString.charAt(1);
-						    System.out.println("이미 존재하는 문자의 1번째 값: " + currentString.charAt(0));
 						    if (Character.getNumericValue(currentString.charAt(0)) == msg.getRoomId()) {
-						        System.out.println("Found: " + currentString);
-						        System.out.println("RLindex: " + i);
 						        RLindex = i;
-						        //roomModel.remove(RLindex);
 						        roomModel.set(RLindex, roomStr2);
 						    }
 						}
 
-						//roomModel.addElement(roomStr2);
 						roomlist.setModel(roomModel);
 						roomlist.repaint();
 						break;
@@ -606,15 +587,62 @@ public class LobbyPanel extends JPanel {
 					case "End" :
 						String endStr = msg.getData();
 						IngamePanel.AppendChat(msg.getUserName(),endStr);
-						IngamePanel.openBtn.setEnabled(false); 
+						IngamePanel.openBtn.setEnabled(false);
+						Msg endMsg = new Msg(userName,"Winner","승자 판별");
+						endMsg.setUserName(userName);
+						if(lobbyPanel.IngamePanel.role == 1)
+						{
+							endMsg.p_cards = IngamePanel.p1_cardList;
+							endMsg.setToken(IngamePanel.token);
+							endMsg.setRoomId(IngamePanel.roomId);
+							sendObject(endMsg);
+						}
+						else if(lobbyPanel.IngamePanel.role == 2)
+						{
+							endMsg.p_cards = IngamePanel.p2_cardList;
+							endMsg.setToken(IngamePanel.token);
+							endMsg.setRoomId(IngamePanel.roomId);
+							sendObject(endMsg);
+						}
+						else if(lobbyPanel.IngamePanel.role == 3)
+						{
+							endMsg.p_cards = IngamePanel.p3_cardList;
+							endMsg.setToken(IngamePanel.token);
+							endMsg.setRoomId(IngamePanel.roomId);
+							sendObject(endMsg);
+						}
+						else if(lobbyPanel.IngamePanel.role == 4)
+						{
+							endMsg.p_cards = IngamePanel.p4_cardList;
+							endMsg.setToken(IngamePanel.token);
+							endMsg.setRoomId(IngamePanel.roomId);
+							sendObject(endMsg);
+						}
+						
+						break;
+						
+					case "Winner" :
+						IngamePanel.AppendChat(msg.getUserName(), msg.getData());
 						break;
 				
                     case "RoomChat":
 						IngamePanel.AppendChat(msg.getUserName(), msg.getData());
-						break;
-                                     	         
-                    
-                    }
+						break;    
+						
+                    /*case "GameOver":
+						int gameOverRoomId = msg.getRoomId();
+						for(int i=0; i<ntRooms.size(); i++) {
+							NTRoom o = ntRooms.get(i);
+							if(o.getRoomId() == gameOverRoomId) {
+								ntRooms.remove(i);
+								roomModel.remove(i);
+								roomlist.setModel(roomModel);
+								roomlist.repaint();
+								break;
+							}
+						}
+						break;*/
+                    }                
                 }
                  catch (IOException e) {
                     AppendText("오류 발생");

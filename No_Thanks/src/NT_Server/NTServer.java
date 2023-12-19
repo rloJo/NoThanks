@@ -31,14 +31,12 @@ public class NTServer extends JFrame {
     private JPanel contentPane;
     JTextArea textArea;
     private JTextField txtPortNumber;
-
-    private List<String> connectedUsers;
     private ArrayList<NTRoom> roomList = new ArrayList<>();
     NTRoom NTRoom;
 
     private ServerSocket socket;
     private Socket client_socket;
-    private Vector<UserService> UserVec = new Vector<>(); //연결된 사용자 저장 벡터
+    private Vector<UserService> UserVec = new Vector<>();
     public Vector<NTRoom> RoomVector = new Vector<NTRoom>(); 
     
     private static final int BUF_LEN = 128;
@@ -175,7 +173,7 @@ public class NTServer extends JFrame {
         		UserService user = (UserService) user_vc.elementAt(i);
         		data += user.userName + " ";
         	}
-        	WriteAll(new Msg("server", "logout", data));
+        	WriteAll(new Msg("server", "UserList", data));
         	AppendText("["+userName +"] 님이 퇴장하셨습니다.\n 남은 참가자 수 " + UserVec.size());
         }
 
@@ -187,8 +185,6 @@ public class NTServer extends JFrame {
 				msg.setRoomId(RoomVector.elementAt(i).getRoomId());
 				msg.setRoomName(RoomVector.elementAt(i).getRoomName());
 				msg.setUserCount(RoomVector.elementAt(i).getUserCount());
-				msg.setIsPass(RoomVector.elementAt(i).getIsPass());
-				msg.setPassWd(RoomVector.elementAt(i).getPassWd());
 				msg.setMode(RoomVector.elementAt(i).getMode());
 				msg.setCode("CreateRoomInfo");
 				WriteOne(msg);
@@ -283,20 +279,14 @@ public class NTServer extends JFrame {
 						AppendText(str);
 						NTRoom ntRoom = new NTRoom(msg.getRoomId(),
 												   msg.getRoomName(),
-												   "normal",
-												   msg.getUserName(),
-												   msg.getIsPass());
+												   (msg.getMode() == 0) ?"normal" : "special",
+												   msg.getUserName()
+												   );
 						ntRoom.setRoomName(msg.getRoomName());
 						ntRoom.setRoomId(msg.getRoomId());
 						ntRoom.setUserCount();
 						msg.setUserCount(ntRoom.getUserCount());
-						
-						if(msg.getIsPass() == true) {
-							ntRoom.setIsPass(true);
-							ntRoom.setPassWd(msg.getPassWd());
-							msg.setIsPass(true);
-						}
-						
+												
 						RoomVector.add(ntRoom);
 						
 						for (int i = 0; i < user_vc.size(); i++) {
@@ -341,18 +331,13 @@ public class NTServer extends JFrame {
 						for(int i=0; i<RoomVector.size(); i++) {
 							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
 							if(msg.getRoomId() == ntRoom.getRoomId()) { 
-								if(ntRoom.getIsPass() && msg.getPassWd().equals(ntRoom.getPassWd())) {
-									findRoom = ntRoom;
-									break;
-								}
-								else if(!ntRoom.getIsPass()) {
-									findRoom = ntRoom; 
-									break;
-								}
-								else break;
+								findRoom = ntRoom; 
+								break;
 							}
+							
+							else break;
 						}
-						
+											
 						if(findRoom == null ) {
 							WriteOne(new Msg("SERVER","RoomFull","틀린 비밀번호"));
 							continue;
@@ -485,7 +470,6 @@ public class NTServer extends JFrame {
 							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
 							if(msg.getRoomId() == ntRoom.getRoomId()) { 
 								RoomVector.elementAt(i).total = gameRoom2.total;
-								System.out.println(RoomVector.elementAt(i).total + "R g"+ gameRoom2.total);
 								break;
 							}
 						}
@@ -514,13 +498,11 @@ public class NTServer extends JFrame {
 								break;
 							}
 						}
-						System.out.println(gameRoom2.total);
 
-						if(gameRoom2.total == 30) //0으로 수정
+						if(gameRoom2.total == 32) // 카드 수 수정
 						{
 							String EatStr = "[" + msg.getUserName() + "] 님이 카드를 먹었습니다.\n" + "카드가 모두 소진되어 게임이 종료 되었습니다.";
 							AppendText(EatStr);
-							AppendText("카드가 모두 소진되어 게임이 종료 되었습니다.");
 							Msg Endmsg = new Msg("server", "End", EatStr);
 							Endmsg.setRole(msg.getRole());
 							for(int i=0; i<user_vc.size(); i++) {
@@ -573,8 +555,44 @@ public class NTServer extends JFrame {
 							}
 						}				
 					}
-																			
-																										
+					
+					else if (msg.getCode().equals("Winner")) { 
+						String EndStr = "승자판별중 .... ";
+						AppendText(EndStr);
+						NTRoom gameRoom2 = null ;
+						for(int i=0; i<RoomVector.size(); i++) {
+							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
+							if(msg.getRoomId() == ntRoom.getRoomId()) { 
+								gameRoom2 = ntRoom; 
+								break;
+							}
+						}				
+						Pair pair = new Pair(msg.p_cards, msg.getUserName(), msg.getToken());
+						gameRoom2.cardList.add(pair);
+						Pair pair2 = gameRoom2.find_winner();
+						Msg WinnerMsg = new Msg("server", "Winner" , " ");
+						WinnerMsg.setData("*"+ pair2.userName + "* 님이 토큰 " 
+											+ pair2.token + "개로" 
+											+ pair2.total 
+											+ "점을 획득하여 우승했습니다.");
+											
+						for(int i=0; i<user_vc.size(); i++) {				
+							UserService u = (NTServer.UserService) user_vc.get(i);
+							if(u.userName == msg.getUserName())
+							{	
+								u.WriteOne(WinnerMsg);
+							}
+						}
+						
+						for(int i=0; i<RoomVector.size(); i++) {
+							NTRoom o = RoomVector.get(i);
+							if(o.getRoomId() == this.roomId) {
+								RoomVector.removeElementAt(i);
+								break;
+							}
+						}
+					}
+																												
                 } catch (IOException e) {
                     AppendText("ois.readObject() 에러 발생");
                     try {

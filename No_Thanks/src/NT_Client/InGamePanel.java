@@ -41,7 +41,7 @@ public class InGamePanel extends JPanel {
 	public ArrayList<Integer> p3_cardList = new ArrayList<>();
 	public ArrayList<Integer> p4_cardList = new ArrayList<>();
 	
-	
+	private helpDialog helpdialog;
 	private Container container;
 	private CardLayout cardlayout;
 	private LobbyPanel lobbyPanel;
@@ -155,7 +155,8 @@ public class InGamePanel extends JPanel {
 		add(cardLabel);
 		
 		JButton helpBtn = new JButton("µµ¿ò¸»");
-		helpBtn.setBounds(565, 369, 68, 23);
+		helpBtn.setBounds(557, 369, 95, 23);
+		helpBtn.addActionListener(new helpBtnListener(helpdialog));
 		add(helpBtn);
 		
 		JScrollPane scrollPane = new JScrollPane();
@@ -177,6 +178,7 @@ public class InGamePanel extends JPanel {
 		card.setFont(new Font("±¼¸²", Font.BOLD | Font.ITALIC, 49));
 		card.setBounds(431, 186, 122, 136);
 		add(card);
+		
 	}
 	
 	
