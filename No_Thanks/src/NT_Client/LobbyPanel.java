@@ -30,6 +30,7 @@ import javax.swing.WindowConstants;
 import common.Msg;
 import javax.swing.ScrollPaneConstants;
 
+//닉네임을 치고 들어가면 보이는 panel
 public class LobbyPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
@@ -43,9 +44,9 @@ public class LobbyPanel extends JPanel {
 	private JLabel waitingroominfoLabel;
 	public Vector<NTRoom> ntRooms = new Vector<> ();
 	private JList<String> userlist; 
-	private DefaultListModel<String> userModel;
+	private DefaultListModel<String> userModel; //접속한 user 데이터를 관리하는 변수
 	private JList<String> roomlist;
-	private DefaultListModel<String> roomModel;
+	private DefaultListModel<String> roomModel; //생성되거나 삭제 된 room 데이터를 관리하는 변수
 	private JLabel chatinfoLabel;
 	private JScrollPane scrollPane;
 	private TextArea textArea;
@@ -205,7 +206,6 @@ public class LobbyPanel extends JPanel {
 	// 방 생성 버튼 누르면 생성 창 뜨게함
 	class CreateRoomBtnClick implements ActionListener
 	{
-
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			createRoomFrame = new CreateRoomFrame(lobbyPanel);
@@ -213,7 +213,7 @@ public class LobbyPanel extends JPanel {
 		}
 	}
 	
-	//CreateRoomFrame에서 방 만들기 버튼을 누르면 실행되는 함수
+	//CreateRoomFrame에서 생성 버튼을 누르면 실행되는 메소드
 	public void createRoom(String roomName,int roomType)
 	{
 		IngamePanel = new InGamePanel(container, lobbyPanel, this.userName);
@@ -240,7 +240,7 @@ public class LobbyPanel extends JPanel {
 		}
 	}
 	
-	//server에 게임 내 유저끼리의 채팅 메시지 전송 메소드
+	//대기실 속 채팅을 전송하는 메소드
 	public void sendChatMessage(String message) {
 		try {
 			Msg msg = new Msg(userName,"RoomChat",message);
@@ -251,7 +251,6 @@ public class LobbyPanel extends JPanel {
 		}
 	}
 	
-	 //클라이언트의 roomList를 업데이트 하기 위한 메소드
     public void updateRoomList() {
 		for(int i=0; i<ntRooms.size(); i++) {
 			NTRoom room = ntRooms.get(i);
@@ -278,13 +277,13 @@ public class LobbyPanel extends JPanel {
 	}
 	
 	
-    // 화면에 출력
+    // 텍스트창에 데이터를 보여준다
     public void AppendText(String msg) {
         textArea.append(msg);
         textArea.setCaretPosition(textArea.getText().length());
     }  
     
- // Server Message를 수신해서 화면에 표시
+    //서버의 메세지를 수신한다.
     class ListenNetwork extends Thread {
     	public ListenNetwork() {
     		Msg roomList = new Msg(userName, "RoomList", "roomList");
@@ -315,43 +314,36 @@ public class LobbyPanel extends JPanel {
                     }
                     
                     /* ---------------- code 분류 ----------------------------*/
-                    /*	"Login" -> 로그인 100
-                     *  "AllChat" -> 전체 채팅 111
-                     *  "CreateRoomInfo" -> 방 생성 정보를 알린다. 200
-                     *  "EnterRoom" -> 생성된 방에 접속했다는 정보. 201
-                     *  
-                     *  
-                     *  
-                     *  "RoomFull" -> 방에 인원이 참 또는 비밀번호 오류 202
-                     *  "RoomList" - 서버로 부터 전체 방 목록이 전송된 경우 210
-                     *  "UserList - 서버로 부터 전체 접속자 목록이 전송된 경우 211
-                     *  
-                     *  
-                     *  
-                     *  300 - 게임 시작
-                     *  301 - 해당 카드를 먹는다는 정보 전달
-                     *  302 - 해당 카드 먹기 거부 정보 전달
-                     *  320 - 경기가 끝나고 승자가 정보 전달
-                     *  400 - 
-                     *  
-                     *  420 - 게임 종료 
-                     *  430 - 종료된 방 삭제
-                     *  500 - 해당 방 채팅
-                     *  510 - 해당 방 user 표시
+                    /*
+                     *  "AllChat" - 전체 채팅 
+                     *  "CreateRoomInfo" - 방 생성 정보를 알린다. 
+                     *  "EnterRoom" - 생성된 방에 접속했다는 정보. 
+                     *  "RoomRefresh" - 게임 대기실에 사람이 접속했을 때 접속한 유저 정보.
+                     *  "GameStartMsg" - 게임 대기실에 4명이 들어오면 게임 시작을 알린다
+                     *  "CheckCard" - 게임 중 카드 열기 버튼을 누르면 서버에서 처리하여 보내는 정보
+                     *  "Eat" - 게임 중 유저가 카드를 먹으면 먹은 카드와 유저정보를 서버가 처리해서 보낸다
+                     *  "NoEat" - 게임 중 유저가 카드를 패스하면 토큰 지불할 것과 쌓인 것을 서버가 처리해서 보낸다
+                     *  "RoomFull" - 방에 인원이 꽉 찼을 때
+                     *  "RoomList" - 서버로 부터 전체 방 목록이 전송된 경우 
+                     *  "UserList - 서버로 부터 전체 접속자 목록이 전송된 경우
+                     *  "End" - 카드를 오픈해서 오픈할 수 있는 카드가 0이되면 받는 정보
+                     *  "Winner" - 게임이 끝나고 승자를 서버에서 결정하고 승자 정보를 받는다
+             
                      *  
        
                      */
                     
                     switch (msg.getCode())
                     {
-                    
-                    case "logout" :
-                    	
+
                     case "AllChat":
                     	String chat = msg.getData();
                     	AppendText(chat +"\n");
                     	break;
-                    
+                    	
+                    case "RoomChat":
+						IngamePanel.AppendChat(msg.getUserName(), msg.getData());
+						break; 
                     
                     case "CreateRoomInfo":
                     	int roomId = msg.getRoomId();
@@ -623,25 +615,7 @@ public class LobbyPanel extends JPanel {
 						
 					case "Winner" :
 						IngamePanel.AppendChat(msg.getUserName(), msg.getData());
-						break;
-				
-                    case "RoomChat":
-						IngamePanel.AppendChat(msg.getUserName(), msg.getData());
-						break;    
-						
-                    /*case "GameOver":
-						int gameOverRoomId = msg.getRoomId();
-						for(int i=0; i<ntRooms.size(); i++) {
-							NTRoom o = ntRooms.get(i);
-							if(o.getRoomId() == gameOverRoomId) {
-								ntRooms.remove(i);
-								roomModel.remove(i);
-								roomlist.setModel(roomModel);
-								roomlist.repaint();
-								break;
-							}
-						}
-						break;*/
+						break;   
                     }                
                 }
                  catch (IOException e) {
@@ -656,7 +630,7 @@ public class LobbyPanel extends JPanel {
                     }
                 } //c
             }//w
-        }//run
+        }//r
     }
 }
   
