@@ -372,8 +372,7 @@ public class NTServer extends JFrame {
 							
 							findRoom.users.add(userName); 
 						}
-						
-						else if(findRoom.getUserCount() == 2) {
+						 else if(findRoom.getUserCount() == 2) {
 
 							String data = findRoom.users.get(0) + " " +findRoom.users.get(1) +" " + msg.getUserName();	
 							Msg obj = new Msg(userName,"EnterRoom", data);
@@ -411,6 +410,12 @@ public class NTServer extends JFrame {
 							findRoom.users.add(userName); 
 						}
 						 
+						else {
+							Msg obj = new Msg(userName ,"RoomFull", "방이 꽉찼습니다");
+							WriteOne(obj);
+							break;
+						}
+						 
 						String info = String.format("[%s]님이 %s번 방에 접속하셨습니다.", msg.getUserName(), roomId);
 						AppendText(info);
 						Msg roomListMsg = new Msg("server", "RoomList", "방 목록 정보 변경");
@@ -425,7 +430,8 @@ public class NTServer extends JFrame {
 
 						 
 						if(findRoom.getUserCount() == 4){ 
-							Msg obj = new Msg("server", "GameStartMsg", "player1 부터 게임을 시작합니다");
+							String startMsg = "GameStartMsg";
+							Msg obj = new Msg("server", startMsg, "player1 부터 게임을 시작합니다");
 							for (int i = 0; i < user_vc.size(); i++) {
 								UserService user = (UserService) user_vc.elementAt(i);
 								if(findRoom.getRoomId() == user.roomId) {
@@ -475,6 +481,14 @@ public class NTServer extends JFrame {
 						}
 						gameRoom2.setIndex();				
 						gameRoom2.total--;
+						for(int i=0; i<RoomVector.size(); i++) {
+							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
+							if(msg.getRoomId() == ntRoom.getRoomId()) { 
+								RoomVector.elementAt(i).total = gameRoom2.total;
+								System.out.println(RoomVector.elementAt(i).total + "R g"+ gameRoom2.total);
+								break;
+							}
+						}
 						String openStr = "[" + msg.getUserName() + "] 님이 카드를 열었습니다.";
 						AppendText(openStr);
 						Msg openMsg = new Msg("server", "CheckCard",openStr);
@@ -500,20 +514,38 @@ public class NTServer extends JFrame {
 								break;
 							}
 						}
-									
-						String EatStr = "[" + msg.getUserName() + "] 님이 카드를 먹었습니다.";
-						AppendText(EatStr);
-						Msg Eatmsg = new Msg("server","Eat",EatStr);
-						Eatmsg.setCard(msg.getCard());
-						Eatmsg.setRole(msg.getRole());
-						
-						for(int i=0; i<user_vc.size(); i++) {
-							UserService u = (NTServer.UserService) user_vc.get(i);
-							if(u.roomId == msg.getRoomId())
-							{
-								u.WriteOne(Eatmsg);
+						System.out.println(gameRoom2.total);
+
+						if(gameRoom2.total == 30) //0으로 수정
+						{
+							String EatStr = "[" + msg.getUserName() + "] 님이 카드를 먹었습니다.\n" + "카드가 모두 소진되어 게임이 종료 되었습니다.";
+							AppendText(EatStr);
+							AppendText("카드가 모두 소진되어 게임이 종료 되었습니다.");
+							Msg Endmsg = new Msg("server", "End", EatStr);
+							Endmsg.setRole(msg.getRole());
+							for(int i=0; i<user_vc.size(); i++) {
+								UserService u = (NTServer.UserService) user_vc.get(i);
+								if(u.roomId == msg.getRoomId())
+								{
+									u.WriteOne(Endmsg);
+								}
 							}
-						}						
+						}
+						else {
+							String EatStr = "[" + msg.getUserName() + "] 님이 카드를 먹었습니다.";
+							AppendText(EatStr);
+							Msg Eatmsg = new Msg("server","Eat",EatStr);
+							Eatmsg.setCard(msg.getCard());
+							Eatmsg.setRole(msg.getRole());
+							
+							for(int i=0; i<user_vc.size(); i++) {
+								UserService u = (NTServer.UserService) user_vc.get(i);
+								if(u.roomId == msg.getRoomId())
+								{
+									u.WriteOne(Eatmsg);
+								}
+							}							
+						}
 					}
 					
 					else if (msg.getCode().equals("NoEat")) { 

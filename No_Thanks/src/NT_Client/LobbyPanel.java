@@ -603,33 +603,12 @@ public class LobbyPanel extends JPanel {
                     	break;					
 						                   	                    	
                                    	
-					case "300":
-						// 자신이 플레이어인 경우
-						if(IngamePanel != null && msg.getRoomId() == IngamePanel.roomId) {
-							String userNames = msg.getData();
-							StringTokenizer st = new StringTokenizer(userNames);
-							if(st.hasMoreTokens())							
-								IngamePanel.p1_nameLabel.setText(st.nextToken());
-							if(st.hasMoreTokens())
-								IngamePanel.p2_nameLabel.setText(st.nextToken());
-							if(st.hasMoreTokens())
-								IngamePanel.p3_nameLabel.setText(st.nextToken());
-							if(st.hasMoreTokens())
-								IngamePanel.p4_nameLabel.setText(st.nextToken());
-							
-							if(IngamePanel.order == 1) { // 순서가 1 인경우 
-								IngamePanel.status = 1; // status 1로 설정하여 카드를 먹을 수 있는 상태로 설정
-							}
-						}
-						// 플레이어가 아니면 방 리스트 상태 업데이트만 해주면 됨
-						else {
-							for(int i=0; i<ntRooms.size(); i++) {
-								if(ntRooms.get(i).getRoomId() == msg.getRoomId())
-									ntRooms.get(i).setStatus(1);
-							}
-						}
+					case "End" :
+						String endStr = msg.getData();
+						IngamePanel.AppendChat(msg.getUserName(),endStr);
+						IngamePanel.openBtn.setEnabled(false); 
 						break;
-                    	
+				
                     case "RoomChat":
 						IngamePanel.AppendChat(msg.getUserName(), msg.getData());
 						break;
