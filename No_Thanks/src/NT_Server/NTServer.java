@@ -359,7 +359,7 @@ public class NTServer extends JFrame {
 						}
 											
 						if(findRoom == null ) {
-							WriteOne(new Msg("SERVER","RoomFull","틀린 비밀번호"));
+							WriteOne(new Msg("SERVER","RoomFull","방이 꽉찼어!"));
 							continue;
 						}
 						//방에 들어가있는 인원수에 따라 다르게 작동
