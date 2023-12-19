@@ -426,7 +426,6 @@ public class NTServer extends JFrame {
 						String info = String.format("[%s]님이 %s번 방에 접속하셨습니다.", msg.getUserName(), roomId);
 						AppendText(info);
 						Msg roomListMsg = new Msg("server", "RoomList", "방 목록 정보 변경");
-						System.out.println(findRoom.getRoomName()+ findRoom.getRoomId() + findRoom.getMode() + findRoom.getUserCount());
 						roomListMsg.setRoomId(findRoom.getRoomId());
 						roomListMsg.setMode(findRoom.getMode());
 						roomListMsg.setRoomName(findRoom.getRoomName());
