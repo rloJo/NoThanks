@@ -1,7 +1,10 @@
 package NT_Server;
 
 import java.util.ArrayList;
-
+/*
+ * 게임이 끝난 클라이언트의 점수를 모아 계산하기 위한 클래스
+ * 
+ */
 public class Pair {
 	public String userName;
 	public ArrayList<Integer> cards; 
@@ -18,7 +21,6 @@ public class Pair {
 	public int sum_cards(ArrayList<Integer> array, int token) {
     	int sum = 0;
     	int index = 0;
-    	// 3 5 6 7 
     	for(int i=0;i<array.size();i++)
     	{
     		if(array.get(i) - index !=1)

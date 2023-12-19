@@ -5,7 +5,7 @@ import java.util.Random;
 import java.util.Vector;
 
 public class NTRoom {
-	public final int special_Size = 31; // 각 모드에 따른 카드 수
+	public final int special_Size = 31; // 각 모드에 따른 카드 수, Normal: 33개 Special: 31개
 	public final int normal_Size = 33;
 	public ArrayList<Pair> cardList = new ArrayList<Pair>();
 	public int total;
@@ -13,8 +13,8 @@ public class NTRoom {
     private String roomName;
     public Vector<String> users = new Vector<>();
     private int [] cards = new int [36];
-    private int userCount; //방의 인원 수
-    private int status; //방의 상태
+    private int userCount; 
+    private int status; 
     private String roomType;
     private int mode; // 방 모드 변수 0:normal 1:special
     public int index =0;
@@ -71,15 +71,14 @@ public class NTRoom {
     	}
     }
     
-    //승자를 구하는 메소드 
+    // 클라이언트의 점수를 계산하는 메소드
     // 연속된 숫자면 제일 작은 숫자만 더하고 , 연속되지 않으면 더한다
     // ex) 카드가 3 4 5 6 7 11 일 때
     // 3부터 7까지는 연속적이므로 제일 작은 3을 더하고 11은 끊김으로 3 + 11
     // 마지막으로 토큰을 빼면 끝
     public int sum_cards(ArrayList<Integer> array, int token) {
     	int sum = 0;
-    	int index = 0;
-    	// 3 5 6 7 
+    	int index = 0; 
     	for(int i=0;i<array.size();i++)
     	{
     		if(array.get(i) - index !=1)
@@ -94,7 +93,7 @@ public class NTRoom {
     	
     	return sum - token;
     }    
-    
+    //승자를 찾는 메소드
     public Pair find_winner() {
 		int min = 100000;
 		int index =0;
