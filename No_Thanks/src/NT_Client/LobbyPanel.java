@@ -94,6 +94,7 @@ public class LobbyPanel extends JPanel {
 		
 		
 		scrollPane = new JScrollPane();
+		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollPane.setBounds(96, 336, 543, 183);
 		add(scrollPane);
@@ -367,9 +368,11 @@ public class LobbyPanel extends JPanel {
                     	boolean IsPass = msg.getIsPass();
                     	String gameMode = (msg.getMode() == 0) ? "normal" : "special"; 
                     	String status = (msg.getStatus() == 0) ? "대기 중" : "게임 중"; 
+                    	
                     	NTRoom newRoom = new NTRoom(roomId);
                     	ntRooms.addElement(newRoom);
                     	String formattedString;
+                    	
                     	if(msg.getRoomName().length() > 6)
                     		formattedString= msg.getRoomName().substring(0,6) + "...";
                     	else {
@@ -385,22 +388,9 @@ public class LobbyPanel extends JPanel {
                     			,msg.getMode() == 0 ? "normal" : "special"
                     			,status);
                     	roomModel.addElement(roomInfo);
+                    	System.out.println(roomlist.getModel());
                     	break;
-                    case "roomList":
-                    	for(int i=0; i<ntRooms.size();i++)
-                    	{
-                    		NTRoom room = ntRooms.get(i);
-                    		if(room.getRoomId() == msg.getRoomId()) {
-                    			
-                    			ntRooms.get(i).setUserCount(msg.getUserCount());
-                    			ntRooms.get(i).setStatus(msg.getStatus());
-                    		}
-              
-                    	}
-                    	updateRoomList();
-              
-                    	break;
-                    	
+                    
                     case "EnterRoom":
                     	lobbyPanel.roomId = msg.getRoomId();
                     	System.out.println(msg.getRoomId());
@@ -477,7 +467,7 @@ public class LobbyPanel extends JPanel {
                     		IngamePanel.p4_nameLabel.setText(st3.nextToken());
                         }
                     	break;
-                                      	
+         
                     case "GameStartMsg":      
                     	IngamePanel.AppendChat(msg.getUserName(),msg.getData());
                     	
@@ -560,17 +550,44 @@ public class LobbyPanel extends JPanel {
 						newRoom2.setIsPass(msg.getIsPass());
 						ntRooms.add(newRoom2); // 방 리스트에 추가
 						
+						if(newRoom2.getUserCount() == 4) 
+							newRoom2.setStatus(1);
 						String s = "";
-						if(newRoom2.getStatus() == 0) s = "게임 대기 중";
+						if(newRoom2.getStatus() == 0) s = "대기 중";
 						else s = "게임 중";
-						String roomStr2 = String.format("%-3s %-8s %d/4 %-8s %-6s"
-                    			,msg.getRoomId()
-                    			,msg.getRoomName()
-                    			,msg.getUserCount()
-                    			,msg.getMode()
-                    			,s);
-						roomModel.addElement(roomStr2); 
 						
+						String RLformattedString = "";
+						if(msg.getRoomName().length() > 6)
+                    		RLformattedString= msg.getRoomName().substring(0,6) + "...";
+                    	else {
+                    		RLformattedString = msg.getRoomName();
+                    		for(int i=0;i<18-msg.getRoomName().length();i++)
+                    			RLformattedString +=" ";
+                    	}
+						
+						String roomStr2 = String.format("%-10d    %8s   %5d/4           %s       %s"
+                    			,msg.getRoomId()
+                    			,RLformattedString
+                    			,msg.getUserCount()
+                    			,msg.getMode() == 0 ? "normal" : "special"
+                    			,s);
+						System.out.println("최신화하여 생성한 roomModel의 값:" + roomStr2);
+			
+						int RLindex = 0;
+						for (int i = 0; i < roomModel.getSize(); i++) {
+						    String currentString = roomModel.getElementAt(i);
+						    //char secondChar = currentString.charAt(1);
+						    System.out.println("이미 존재하는 문자의 1번째 값: " + currentString.charAt(0));
+						    if (Character.getNumericValue(currentString.charAt(0)) == msg.getRoomId()) {
+						        System.out.println("Found: " + currentString);
+						        System.out.println("RLindex: " + i);
+						        RLindex = i;
+						        //roomModel.remove(RLindex);
+						        roomModel.set(RLindex, roomStr2);
+						    }
+						}
+
+						//roomModel.addElement(roomStr2);
 						roomlist.setModel(roomModel);
 						roomlist.repaint();
 						break;

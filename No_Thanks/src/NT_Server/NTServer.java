@@ -413,7 +413,7 @@ public class NTServer extends JFrame {
 						 
 						String info = String.format("[%s]님이 %s번 방에 접속하셨습니다.", msg.getUserName(), roomId);
 						AppendText(info);
-						Msg roomListMsg = new Msg("server", "roomList", "방 목록 정보 변경");
+						Msg roomListMsg = new Msg("server", "RoomList", "방 목록 정보 변경");
 						System.out.println(findRoom.getRoomName()+ findRoom.getRoomId() + findRoom.getMode() + findRoom.getUserCount());
 						roomListMsg.setRoomId(findRoom.getRoomId());
 						roomListMsg.setMode(findRoom.getMode());
@@ -422,6 +422,7 @@ public class NTServer extends JFrame {
 						roomListMsg.setStatus(findRoom.getStatus());
 						WriteAll(roomListMsg);
 						AppendText("방 인원수가 변경되어 상태를 update 합니다");
+
 						 
 						if(findRoom.getUserCount() == 4){ 
 							Msg obj = new Msg("server", "GameStartMsg", "player1 부터 게임을 시작합니다");
