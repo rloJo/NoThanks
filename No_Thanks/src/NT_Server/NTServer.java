@@ -91,8 +91,8 @@ public class NTServer extends JFrame {
                 } catch (NumberFormatException | IOException e1) {
                     e1.printStackTrace();
                 }
-                AppendText("Chat Server Running..");
-                btnServerStart.setText("Chat Server Running..");
+                AppendText("NoThanks Server Running..");
+                btnServerStart.setText("NoThanks Server Running..");
                 btnServerStart.setEnabled(false);
                 txtPortNumber.setEnabled(false);
                 AcceptServer accept_server = new AcceptServer();
@@ -110,15 +110,13 @@ public class NTServer extends JFrame {
                 try {
                     AppendText("Waiting clients ...");
                     client_socket = socket.accept();
-                    AppendText("새로운 참가자 from " + client_socket);
-                    
-                    //user 당 하나씩 스레드 생성
+                    AppendText("새로운 참가자 연결");
                     UserService new_user = new UserService(client_socket);
-                    UserVec.add(new_user); // 새 참가자 배열에 추가
-                    AppendText("사용자 입장. 현재 참가자 수 " + UserVec.size());
+                    UserVec.add(new_user);
+                    //AppendText("사용자 입장. 현재 참가자 수 " + UserVec.size());
                     new_user.start();
                 } catch (IOException e) {
-                    AppendText("!!!! accept 에러 발생... !!!!");
+                    AppendText("accept 에러 발생");
                 }
             }
         }
@@ -155,13 +153,13 @@ public class NTServer extends JFrame {
                 oos.flush();
                 ois = new ObjectInputStream(client_socket.getInputStream());      
             } catch (Exception e) {
-                AppendText("userService error");
+                AppendText("userService 에러 발생");
             }
         }
         
         public void Login() {
         	String data = "";
-        	AppendText("새로운 참가자" + userName + "입장");
+        	AppendText("새로운 참가자 [" + userName + "]님이 입장하셨습니다.");
         	for(int i=0;i<user_vc.size();i++) {
         		UserService user = (UserService) user_vc.elementAt(i);
         		data+=user.userName + " ";
@@ -178,7 +176,7 @@ public class NTServer extends JFrame {
         		data += user.userName + " ";
         	}
         	WriteAll(new Msg("server", "logout", data));
-        	AppendText("사용자 퇴장. 남은 참가자 수 " + UserVec.size());
+        	AppendText("["+userName +"] 님이 퇴장하셨습니다.\n 남은 참가자 수 " + UserVec.size());
         }
 
         public void roomListShow(String userName) {
@@ -205,7 +203,7 @@ public class NTServer extends JFrame {
             try {
                 oos.writeObject(ob);
             } catch (IOException e) {
-                AppendText("oos.writeOne() error");
+                AppendText("oos.writeOne() 에러 발생");
                 try {
                     oos.close();
                     ois.close();
@@ -246,13 +244,11 @@ public class NTServer extends JFrame {
 						break;
 					if (ob instanceof Msg) {
 						msg = (Msg) ob;
-			
-						AppendObject(msg);
 					} 
 					else
 						continue;
 					
-					if(msg.getCode().equals("Login")) { //login
+					if(msg.getCode().equals("Login")) { 
 						userName = msg.getUserName();
 						Login();
 						roomListShow(userName);
@@ -260,14 +256,14 @@ public class NTServer extends JFrame {
 					
 					else if(msg.getCode().equals("AllChat"))
 					{
-						AppendText(msg.getData());
+						AppendText("전채 채팅 :"+msg.getData());
 						WriteAll(msg);
 					}
 					
 					else if(msg.getCode().equals("RoomChat"))
 					{
 						String sender = String.format("[%s] %s", msg.getUserName(), msg.getData());
-						AppendText(sender);
+						AppendText(msg.getRoomId()+ "번 방 채팅 : " + sender);
 						for(int i=0; i<user_vc.size(); i++) {
 							UserService user = (UserService) user_vc.elementAt(i);
                             if (user != this && msg.getRoomId() == user.roomId) {
@@ -279,11 +275,11 @@ public class NTServer extends JFrame {
 						
 					}
 					
-					else if(msg.getCode().equals("CreateRoomInfo")) {
-						str = String.format ("[%s]님이 [%s]방을 만들었습니다.", msg.getUserName(), msg.getData());
-						AppendText(str);
+					else if(msg.getCode().equals("CreateRoomInfo")) {		
 						msg.setRoomId(roomNum++);
-						str = String.format ("방번호 : %d 방 제목: %s 방이 만들어졌습니다.", msg.getRoomId(), msg.getRoomName());
+						str = String.format ("[%s]님이 %s번 %s", msg.getUserName(), msg.getRoomId() ,msg.getData());
+						AppendText(str);
+						str = String.format ("방 번호 : %d, 방 제목: %s 방이 만들어졌습니다.", msg.getRoomId(), msg.getRoomName());
 						AppendText(str);
 						NTRoom ntRoom = new NTRoom(msg.getRoomId(),
 												   msg.getRoomName(),
@@ -294,7 +290,7 @@ public class NTServer extends JFrame {
 						ntRoom.setRoomId(msg.getRoomId());
 						ntRoom.setUserCount();
 						msg.setUserCount(ntRoom.getUserCount());
-						// 만들어진 방에 비밀번호가 설정되어 있는지
+						
 						if(msg.getIsPass() == true) {
 							ntRoom.setIsPass(true);
 							ntRoom.setPassWd(msg.getPassWd());
@@ -303,7 +299,6 @@ public class NTServer extends JFrame {
 						
 						RoomVector.add(ntRoom);
 						
-						// 방 만들었다는 정보를 전체 유저에게 보내준다. 
 						for (int i = 0; i < user_vc.size(); i++) {
 							UserService user = (UserService) user_vc.elementAt(i);
 							if(user != this)
@@ -318,18 +313,17 @@ public class NTServer extends JFrame {
 											
 					}
 					
-					else if (msg.getCode().equals("RoomRefresh")) { //방 접속자 목록...
+					else if (msg.getCode().equals("RoomRefresh")) { 
 						NTRoom findRoom = null;
 						String data = "";
 						for(int i=0; i<RoomVector.size(); i++) {
 							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
-							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
-								findRoom = ntRoom; // 찾은 방 저장
+							if(msg.getRoomId() == ntRoom.getRoomId()) { 
+								findRoom = ntRoom; 
 								break;
 							}
 						}
 						
-						// player
 						for(int j=0; j<findRoom.users.size(); j++) {
 							data += findRoom.users.elementAt(j) + " ";
 						}						
@@ -346,53 +340,47 @@ public class NTServer extends JFrame {
 						
 						for(int i=0; i<RoomVector.size(); i++) {
 							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
-							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
+							if(msg.getRoomId() == ntRoom.getRoomId()) { 
 								if(ntRoom.getIsPass() && msg.getPassWd().equals(ntRoom.getPassWd())) {
 									findRoom = ntRoom;
 									break;
 								}
 								else if(!ntRoom.getIsPass()) {
-									System.out.println("방 찾음");
-									findRoom = ntRoom; // 찾은 방 저장
+									findRoom = ntRoom; 
 									break;
 								}
 								else break;
 							}
 						}
+						
 						if(findRoom == null ) {
 							WriteOne(new Msg("SERVER","RoomFull","틀린 비밀번호"));
 							continue;
 						}
-						System.out.println("유저카운트" + findRoom.getUserCount());
+						
 						 if(findRoom.getUserCount() == 1) {
-							//해당 방 유저 목록 띄우기 
 							String data = findRoom.users.get(0) + " " + msg.getUserName();
-							System.out.println("usercount == 1(사용자2명):" + data);
 							Msg obj = new Msg(userName,"EnterRoom", data);
 							obj.setRole(obj.p2);
 							obj.setRoomId(msg.getRoomId());
 							this.role = obj.p2;
-							this.roomId = msg.getRoomId();
-							System.out.println("방번호:" + msg.getRoomId());
+							this.roomId = msg.getRoomId();					
 							
 							WriteOne(obj);
-							System.out.println(obj.getUserName());
 							obj.setUserName(findRoom.users.get(0));
 							WriteOne(obj);
 							
-							findRoom.users.add(userName); // player 리스트에 추가
+							findRoom.users.add(userName); 
 						}
 						
 						else if(findRoom.getUserCount() == 2) {
-							//해당 방 유저 목록 띄우기 
+
 							String data = findRoom.users.get(0) + " " +findRoom.users.get(1) +" " + msg.getUserName();	
-							System.out.println("usercount == 2(사용자3명):" + data);
 							Msg obj = new Msg(userName,"EnterRoom", data);
 							obj.setRole(obj.p3);
 							obj.setRoomId(msg.getRoomId());
 							this.role = obj.p3;
 							this.roomId = msg.getRoomId();
-							System.out.println("방번호:" + msg.getRoomId());
 							
 							WriteOne(obj);
 							obj.setUserName(findRoom.users.get(0));
@@ -400,12 +388,11 @@ public class NTServer extends JFrame {
 							obj.setUserName(findRoom.users.get(1));
 							WriteOne(obj);
 							
-							findRoom.users.add(userName); // player 리스트에 추가
+							findRoom.users.add(userName); 
 						}
 						else if(findRoom.getUserCount() == 3) {
 							String data = findRoom.users.get(0) + " " +findRoom.users.get(1) +" "
 									+findRoom.users.get(2) +" "+ msg.getUserName();
-							System.out.println("usercount == 3(사용자4명):" + data);
 							Msg obj = new Msg(userName, "EnterRoom", data);
 							obj.setRole(obj.p4);
 							obj.setRoomId(msg.getRoomId());
@@ -421,37 +408,50 @@ public class NTServer extends JFrame {
 							WriteOne(obj);
 							
 							
-							findRoom.users.add(userName); // player 리스트에 추가
+							findRoom.users.add(userName); 
 						}
 						 
-						 String info = String.format("[%s]님이 [%s]방에 접속하셨습니다.", msg.getUserName(), msg.getData());
+						String info = String.format("[%s]님이 %s번 방에 접속하셨습니다.", msg.getUserName(), roomId);
 						AppendText(info);
+						Msg roomListMsg = new Msg("server", "roomList", "방 목록 정보 변경");
+						System.out.println(findRoom.getRoomName()+ findRoom.getRoomId() + findRoom.getMode() + findRoom.getUserCount());
+						roomListMsg.setRoomId(findRoom.getRoomId());
+						roomListMsg.setMode(findRoom.getMode());
+						roomListMsg.setRoomName(findRoom.getRoomName());
+						roomListMsg.setUserCount(findRoom.getUserCount());
+						roomListMsg.setStatus(findRoom.getStatus());
+						WriteAll(roomListMsg);
+						AppendText("방 인원수가 변경되어 상태를 update 합니다");
 						 
-						if(findRoom.getUserCount() == 4){ //4명이 차서 게임 시작을 알린다
-							System.out.println("다 참 서버에서 메시지 보냄");
-							Msg obj = new Msg("server", "GameStartMsg", "player1 부터 게임을 시작합니다"); //게임 시작 메시지를 방에 있는 모든 object에게 뿌림
+						if(findRoom.getUserCount() == 4){ 
+							Msg obj = new Msg("server", "GameStartMsg", "player1 부터 게임을 시작합니다");
 							for (int i = 0; i < user_vc.size(); i++) {
 								UserService user = (UserService) user_vc.elementAt(i);
 								if(findRoom.getRoomId() == user.roomId) {
 									user.WriteOne(obj);
 								}
 							}
-													
-							findRoom.setStatus(1); //방 상태를 게임 중으로 바꿈							
-							AppendText("[" + roomId + "]방 게임 시작!!");
-							AppendText("현재 [" + roomId + "]방에 있는 플레이어 수 : " + findRoom.users.size());
+							findRoom.setStatus(1);
+							roomListMsg.setRoomName(findRoom.getRoomName());
+							roomListMsg.setUserCount(findRoom.getUserCount());
+							roomListMsg.setRoomId(findRoom.getRoomId());
+							roomListMsg.setMode(findRoom.getMode());
+							roomListMsg.setStatus(findRoom.getStatus());
+							WriteAll(roomListMsg);
+							AppendText(String.format("%d 번방의 상태가 변경되어 상태를 update 합니다",findRoom.getRoomId()));
+							AppendText(roomId + "번 방 게임 시작!!");
 						}
 						 			
 						 					 
 					}
 					
-					else if (msg.getCode().equals("GameStart")) { //4인이 다 차면 게임이 시작된다...
+					else if (msg.getCode().equals("GameStart")) { 
 						NTRoom gameRoom = null;
 						String data = "게임을 시작합니다 1번 player부터 시작합니다";
 						for(int i=0; i<RoomVector.size(); i++) {
 							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
-							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
-								gameRoom = ntRoom; // 찾은 방 저장
+							if(msg.getRoomId() == ntRoom.getRoomId()) { 
+								gameRoom = ntRoom; 
 								break;
 							}
 						}
@@ -463,18 +463,19 @@ public class NTServer extends JFrame {
 						}
 					}
 					
-					else if (msg.getCode().equals("CardOpen")) { //카드 오픈 버튼을 누르면
+					else if (msg.getCode().equals("CardOpen")) { 
 						NTRoom gameRoom2 = null ;
 						for(int i=0; i<RoomVector.size(); i++) {
 							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
-							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
-								gameRoom2 = ntRoom; // 찾은 방 저장
+							if(msg.getRoomId() == ntRoom.getRoomId()) { 
+								gameRoom2 = ntRoom; 
 								break;
 							}
 						}
 						gameRoom2.setIndex();				
 						gameRoom2.total--;
 						String openStr = "[" + msg.getUserName() + "] 님이 카드를 열었습니다.";
+						AppendText(openStr);
 						Msg openMsg = new Msg("server", "CheckCard",openStr);
 						openMsg.setRole(msg.getRole());
 						openMsg.setToken(gameRoom2.total);
@@ -500,6 +501,7 @@ public class NTServer extends JFrame {
 						}
 									
 						String EatStr = "[" + msg.getUserName() + "] 님이 카드를 먹었습니다.";
+						AppendText(EatStr);
 						Msg Eatmsg = new Msg("server","Eat",EatStr);
 						Eatmsg.setCard(msg.getCard());
 						Eatmsg.setRole(msg.getRole());
@@ -513,18 +515,18 @@ public class NTServer extends JFrame {
 						}						
 					}
 					
-					else if (msg.getCode().equals("NoEat")) { //카드 오픈 버튼을 누르면
-						System.out.println("카드 안먹었네");
+					else if (msg.getCode().equals("NoEat")) { 
+						String noEatStr = "[" + msg.getUserName() + "] 님이 토큰을 지불하고 턴을 넘겼습니다.";
+						AppendText(noEatStr);
 						NTRoom gameRoom2 = null ;
 						for(int i=0; i<RoomVector.size(); i++) {
 							NTRoom ntRoom = (NTRoom) RoomVector.elementAt(i);
-							if(msg.getRoomId() == ntRoom.getRoomId()) { // 클라이언트가 보낸 roomId를 비교해 해당 방을 찾는다
-								gameRoom2 = ntRoom; // 찾은 방 저장
+							if(msg.getRoomId() == ntRoom.getRoomId()) { 
+								gameRoom2 = ntRoom; 
 								break;
 							}
 						}				
 						
-						String noEatStr = "[" + msg.getUserName() + "] 님이 토큰을 지불하고 턴을 넘겼습니다.";
 						Msg noEatMsg = new Msg("server","NoEat" ,noEatStr);
 						noEatMsg.setRole(msg.getRole());
 						noEatMsg.setToken(msg.getToken());
@@ -541,7 +543,7 @@ public class NTServer extends JFrame {
 																			
 																										
                 } catch (IOException e) {
-                    AppendText("ois.readObject() error");
+                    AppendText("ois.readObject() 에러 발생");
                     try {
                         oos.close();
                         ois.close();

@@ -28,6 +28,7 @@ import javax.swing.JScrollPane;
 import javax.swing.WindowConstants;
 
 import common.Msg;
+import javax.swing.ScrollPaneConstants;
 
 public class LobbyPanel extends JPanel {
 
@@ -85,10 +86,6 @@ public class LobbyPanel extends JPanel {
 		add(waitingroominfoLabel);
 		
 		roomModel = new DefaultListModel<String>();
-		roomlist = new JList<String>(roomModel);
-		roomlist.setBounds(96, 52, 800, 244);
-		add(roomlist);
-		roomlist.addMouseListener(new roomListClick());
 		
 		chatinfoLabel = new JLabel("전체 채팅");
 		chatinfoLabel.setFont(new Font("굴림", Font.BOLD, 24));
@@ -97,12 +94,14 @@ public class LobbyPanel extends JPanel {
 		
 		
 		scrollPane = new JScrollPane();
-		scrollPane.setBounds(96, 336, 533, 183);
+		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		scrollPane.setBounds(96, 336, 543, 183);
 		add(scrollPane);
 		
 		textArea = new TextArea();
-		textArea.setEditable(false);
 		scrollPane.setViewportView(textArea);
+		textArea.setFont(new Font("Dialog", Font.PLAIN, 17));
+		textArea.setEditable(false);
 		
 		userinfoLabel = new JLabel("유저 목록");
 		userinfoLabel.setFont(new Font("굴림", Font.BOLD, 24));
@@ -123,16 +122,29 @@ public class LobbyPanel extends JPanel {
 		
 		userModel = new DefaultListModel<String>();
 		userlist = new JList<String>(userModel);
+		userlist.setFont(new Font("굴림", Font.BOLD, 22));
 		userlist.setBounds(651, 336, 245, 183);
 		add(userlist);
 		
-		AppendText("User " + userName + " connecting " + ip_addr + " " + port_num + "\n");
+		AppendText("[" + userName + "]로 접속하였습니다.\n");
 		this.userName = userName;
 		
 		CreateBtn = new JButton("방 생성");
 		CreateBtn.setFont(new Font("굴림", Font.BOLD, 18));
 		CreateBtn.setBounds(650, 525, 97, 32);
 		add(CreateBtn);
+		
+		JScrollPane scrollPane_1 = new JScrollPane();
+		scrollPane_1.setBounds(96, 52, 800, 244);
+		add(scrollPane_1);
+		roomlist = new JList<String>(roomModel);
+		scrollPane_1.setViewportView(roomlist);
+		roomlist.setFont(new Font("굴림", Font.BOLD, 27));
+		
+		JScrollPane scrollPane_2 = new JScrollPane();
+		scrollPane_2.setBounds(663, 374, 2, 2);
+		add(scrollPane_2);
+		roomlist.addMouseListener(new roomListClick());
 		CreateBtn.addActionListener(createAction);
 
         try {
@@ -145,7 +157,6 @@ public class LobbyPanel extends JPanel {
             Msg loginMsg = new Msg(userName,"Login", "login");
             sendObject(loginMsg);
             updateRoomList();
-            
             ListenNetwork net = new ListenNetwork();
             net.start();
             
@@ -249,25 +260,38 @@ public class LobbyPanel extends JPanel {
 		}
 	}
 	
-    // 화면에 출력
-    public void AppendText(String msg) {
-        textArea.append(msg);
-        textArea.setCaretPosition(textArea.getText().length());
-    }
-
-
-    
-    //클라이언트의 roomList를 업데이트 하기 위한 메소드
+	 //클라이언트의 roomList를 업데이트 하기 위한 메소드
     public void updateRoomList() {
 		for(int i=0; i<ntRooms.size(); i++) {
 			NTRoom room = ntRooms.get(i);
 			String status = "";
 			if(room.getStatus() == 0) status = "대기 중";
 			else status = "게임 중";
-			String str = String.format("%-16s%-5d%-9s", room.getRoomName(), room.getUserCount(), status);
-			roomModel.set(i, str);
+			String formattedString;
+        	if(room.getRoomName().length() > 6)
+        		formattedString= room.getRoomName().substring(0,6) + "...";
+        	else {
+        		formattedString = room.getRoomName();
+        		for(int j=0;j<18-room.getRoomName().length();j++)
+        			formattedString +=" ";
+        	}
+        	           
+        	String roomInfo = String.format("%-10d    %8s   %5d/4           %s       %s"
+        			,room.getRoomId()
+        			,formattedString
+        			,room.getUserCount()
+        			,room.getMode() == 0 ? "normal" : "special"
+        			,status);
+			roomModel.set(i, roomInfo);
 		}
 	}
+	
+	
+    // 화면에 출력
+    public void AppendText(String msg) {
+        textArea.append(msg);
+        textArea.setCaretPosition(textArea.getText().length());
+    }  
     
  // Server Message를 수신해서 화면에 표시
     class ListenNetwork extends Thread {
@@ -336,6 +360,7 @@ public class LobbyPanel extends JPanel {
                     
                     
                     case "CreateRoomInfo":
+                    //case "roomlist":
                     	int roomId = msg.getRoomId();
                     	String roomName = msg.getRoomName();
                     	int userCount = msg.getUserCount();
@@ -344,16 +369,37 @@ public class LobbyPanel extends JPanel {
                     	String status = (msg.getStatus() == 0) ? "대기 중" : "게임 중"; 
                     	NTRoom newRoom = new NTRoom(roomId);
                     	ntRooms.addElement(newRoom);
-                    	
-                    	String roomInfo = String.format("%-3s %-8s %-5d %-8s %-6s"
+                    	String formattedString;
+                    	if(msg.getRoomName().length() > 6)
+                    		formattedString= msg.getRoomName().substring(0,6) + "...";
+                    	else {
+                    		formattedString = msg.getRoomName();
+                    		for(int i=0;i<18-msg.getRoomName().length();i++)
+                    			formattedString +=" ";
+                    	}
+                    	           
+                    	String roomInfo = String.format("%-10d    %8s   %5d/4           %s       %s"
                     			,msg.getRoomId()
-                    			,msg.getRoomName()
+                    			,formattedString
                     			,msg.getUserCount()
-                    			,msg.getMode()
+                    			,msg.getMode() == 0 ? "normal" : "special"
                     			,status);
                     	roomModel.addElement(roomInfo);
                     	break;
-                    	
+                    case "roomList":
+                    	for(int i=0; i<ntRooms.size();i++)
+                    	{
+                    		NTRoom room = ntRooms.get(i);
+                    		if(room.getRoomId() == msg.getRoomId()) {
+                    			
+                    			ntRooms.get(i).setUserCount(msg.getUserCount());
+                    			ntRooms.get(i).setStatus(msg.getStatus());
+                    		}
+              
+                    	}
+                    	updateRoomList();
+              
+                    	break;
                     	
                     case "EnterRoom":
                     	lobbyPanel.roomId = msg.getRoomId();
@@ -372,15 +418,11 @@ public class LobbyPanel extends JPanel {
                     	IngamePanel.roomId = msg.getRoomId();
                     	container.add(IngamePanel,"IngamePanel");
                     	IngamePanel.role = msg.getRole();
-                    	System.out.println("현재 유저:" + msg.getUserName());
-                    	System.out.println("msg.getRole(): " + msg.getRole());
-                    	//System.out.println("inGamePanel상태:" + IngamePanel);
                     	if(msg.getRole() == msg.p1) {
                     		IngamePanel.p1_nameLabel.setText(msg.getData());
                     	}
                     	
                     	if(msg.getRole() == msg.p2) {
-                    		//IngamePanel.p2_nameLabel.setText(msg.getUserName());
                     		StringTokenizer tokenizer = new StringTokenizer(msg.getData());                             
                     		IngamePanel.p1_nameLabel.setText(tokenizer.nextToken());                    
                     		IngamePanel.p2_nameLabel.setText(tokenizer.nextToken());
@@ -435,8 +477,7 @@ public class LobbyPanel extends JPanel {
                     		IngamePanel.p4_nameLabel.setText(st3.nextToken());
                         }
                     	break;
-                    	
-                    	
+                                      	
                     case "GameStartMsg":      
                     	IngamePanel.AppendChat(msg.getUserName(),msg.getData());
                     	
@@ -488,7 +529,6 @@ public class LobbyPanel extends JPanel {
                     case "NoEat" : 
                     	IngamePanel.AppendChat(msg.getUserName(),msg.getData());
                     	IngamePanel.token_stack += msg.getToken();
-                    	System.out.println("현재까지 쌓인 토큰 " + msg.getToken());
                     	if(msg.getRole() == IngamePanel.role)
                     	{
                     		IngamePanel.token--;
@@ -502,11 +542,7 @@ public class LobbyPanel extends JPanel {
                     	}
                     	
                     	break;
-                    	
-                    	
-                    	
-                    	
-                    	
+                    	             	
                     	// 게임 방에 접속 할 수 없는 경우
 					case "RoomFull":
 						JOptionPane.showMessageDialog(mainFrame, msg.getData(), "error", JOptionPane.ERROR_MESSAGE);

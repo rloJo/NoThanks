@@ -138,7 +138,10 @@ public class NTRoom {
 	}
 	
 	public void setStatus(int i) {
-		this.status = i;
-		
+		this.status = i;	
+	}  
+	
+	public void setMode(int mode) {
+		this.mode = mode;	
 	}  
 }
